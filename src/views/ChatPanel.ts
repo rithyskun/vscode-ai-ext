@@ -42,6 +42,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         await this.handleProviderChange(msg.provider);
       } else if (msg.type === 'changeModel') {
         await this.handleModelChange(msg.model);
+      } else if (msg.type === 'insertCode') {
+        await this.handleInsertCode(msg.code, msg.language);
       }
     });
   }
@@ -224,6 +226,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     this.loadSessionHistory();
   }
 
+  public notifyThemeChange(theme: string) {
+    if (!this.view) return;
+
+    this.view.webview.postMessage({
+      type: 'themeChanged',
+      theme
+    });
+  }
+
   private loadSessionHistory() {
     if (!this.view) return;
 
@@ -238,6 +249,27 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       });
     } catch (error) {
       console.error('Failed to load session history:', error);
+    }
+  }
+
+  private async handleInsertCode(code: string, language: string = 'text') {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('No active editor. Open a file first to insert code.');
+      return;
+    }
+
+    try {
+      // Insert at cursor position or at end of document
+      const position = editor.selection.active;
+      await editor.edit(editBuilder => {
+        const insertionPoint = new vscode.Position(position.line, position.character);
+        editBuilder.insert(insertionPoint, code + '\n');
+      });
+
+      vscode.window.showInformationMessage(`Inserted ${language} code into editor`);
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to insert code: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

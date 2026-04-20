@@ -68,6 +68,9 @@ class ChatViewProvider {
             else if (msg.type === 'changeModel') {
                 await this.handleModelChange(msg.model);
             }
+            else if (msg.type === 'insertCode') {
+                await this.handleInsertCode(msg.code, msg.language);
+            }
         });
     }
     async handleChat(userMessage, agentMode, rawHistory) {
@@ -222,6 +225,14 @@ class ChatViewProvider {
         this.currentSessionId = sessionId;
         this.loadSessionHistory();
     }
+    notifyThemeChange(theme) {
+        if (!this.view)
+            return;
+        this.view.webview.postMessage({
+            type: 'themeChanged',
+            theme
+        });
+    }
     loadSessionHistory() {
         if (!this.view)
             return;
@@ -236,6 +247,25 @@ class ChatViewProvider {
         }
         catch (error) {
             console.error('Failed to load session history:', error);
+        }
+    }
+    async handleInsertCode(code, language = 'text') {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage('No active editor. Open a file first to insert code.');
+            return;
+        }
+        try {
+            // Insert at cursor position or at end of document
+            const position = editor.selection.active;
+            await editor.edit(editBuilder => {
+                const insertionPoint = new vscode.Position(position.line, position.character);
+                editBuilder.insert(insertionPoint, code + '\n');
+            });
+            vscode.window.showInformationMessage(`Inserted ${language} code into editor`);
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to insert code: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
     getHtml() {

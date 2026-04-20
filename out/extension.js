@@ -131,6 +131,11 @@ function activate(context) {
         if (chatHistoryProvider) {
             chatHistoryProvider.refresh();
         }
+    }), vscode.commands.registerCommand('aiAssistant.applyTheme', async (theme) => {
+        const appliedTheme = theme || vscode.workspace.getConfiguration('aiAssistant').get('theme', 'dark');
+        if (chatProvider) {
+            chatProvider.notifyThemeChange(appliedTheme);
+        }
     }));
     // ── Status bar item ───────────────────────────────────────────────────────
     const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);

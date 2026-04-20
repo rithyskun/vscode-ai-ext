@@ -124,6 +124,13 @@ export function activate(context: vscode.ExtensionContext) {
       if (chatHistoryProvider) {
         chatHistoryProvider.refresh();
       }
+    }),
+
+    vscode.commands.registerCommand('aiAssistant.applyTheme', async (theme?: string) => {
+      const appliedTheme = theme || vscode.workspace.getConfiguration('aiAssistant').get<string>('theme', 'dark');
+      if (chatProvider) {
+        chatProvider.notifyThemeChange(appliedTheme);
+      }
     })
   );
 

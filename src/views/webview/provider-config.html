@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-secondary: #12121a;
+      --fg: #e8e8e8;
+      --muted: #8b8b9b;
+      --input-bg: #1a1a24;
+      --input-border: #2a2a3a;
+      --border: #1e1e2e;
+      --border-hover: #3a3a4a;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --accent-bg: rgba(139, 92, 246, 0.15);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+    }
+
+    html.light-theme {
+      --bg: #ffffff;
+      --bg-secondary: #f5f5f5;
+      --fg: #1a1a1a;
+      --muted: #666666;
+      --input-bg: #f0f0f0;
+      --input-border: #ddd;
+      --border: #e0e0e0;
+      --border-hover: #d0d0d0;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-bg: rgba(99, 102, 241, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      gap: 2px;
+      padding: 0 12px;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--fg);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--fg);
+    }
+
+    .label-help {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background: var(--input-bg);
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 12px;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+      cursor: pointer;
+      accent-color: var(--accent);
+      margin-right: 8px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .checkbox-label input {
+      margin: 0 8px 0 0;
+    }
+
+    .switch {
+      display: inline-block;
+      width: 40px;
+      height: 24px;
+      background: var(--input-border);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+    }
+
+    .switch.on {
+      background: var(--success);
+    }
+
+    .switch-toggle {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .switch.on .switch-toggle {
+      left: 18px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      color: white;
+    }
+
+    .btn-danger {
+      color: var(--error);
+      border-color: var(--error);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+    }
+
+    .btn-success {
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-enabled {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    .status-disabled {
+      background: rgba(107, 114, 128, 0.2);
+      color: var(--muted);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 0;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      flex: 1;
+    }
+
+    .setting-value {
+      margin-left: 16px;
+    }
+
+    .message {
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .message.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .section-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .theme-preview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .theme-option {
+      padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      background: var(--bg-secondary);
+    }
+
+    .theme-option:hover {
+      border-color: var(--accent);
+    }
+
+    .theme-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .theme-sample {
+      width: 100%;
+      height: 60px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .theme-sample.dark {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+
+    .theme-sample.light {
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+      color: #1a1a1a;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.3);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="providers">Providers</button>
+    <button class="tab-btn" data-tab="permissions">Permissions</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- Providers Tab -->
+  <div class="tab-content active" id="providers-tab">
+    <div id="providers-container"></div>
+  </div>
+
+  <!-- Permissions Tab -->
+  <div class="tab-content" id="permissions-tab">
+    <div id="permissions-container"></div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div class="tab-content" id="settings-tab">
+    <div id="settings-container">
+      <div class="card">
+        <div class="card-title">Theme</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <label>Appearance</label>
+            <span class="label-help">Choose your preferred theme</span>
+          </div>
+          <div class="setting-value">
+            <div class="theme-preview">
+              <div class="theme-option selected" data-theme="dark">
+                <div class="theme-sample dark">Dark</div>
+                <span>Dark</span>
+              </div>
+              <div class="theme-option" data-theme="light">
+                <div class="theme-sample light">Light</div>
+                <span>Light</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Chat Behavior</div>
+        <div class="form-group">
+          <div class="checkbox-label">
+            <input type="checkbox" id="agent-mode-default" aria-label="Default to agent mode">
+            <label for="agent-mode-default" style="margin: 0;">Default to Agent Mode</label>
+          </div>
+          <span class="label-help">Use agent mode by default for chat interactions</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Editor Integration</div>
+        <div class="form-group">
+          <div class="checkbox-label">
+            <input type="checkbox" id="inline-completion" checked aria-label="Enable inline completion">
+            <label for="inline-completion" style="margin: 0;">Enable Inline Completion</label>
+          </div>
+          <span class="label-help">Show AI suggestions while typing</span>
+        </div>
+        <div class="form-group">
+          <label for="context-lines">Context Lines</label>
+          <input type="number" id="context-lines" min="10" max="200" value="50">
+          <span class="label-help">Number of lines of context to include in requests</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Data & Storage</div>
+        <div class="button-group">
+          <button class="btn-danger" id="clear-history-btn">Clear Chat History</button>
+          <button id="export-settings-btn">Export Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+    let currentTheme = 'dark';
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tabName = e.target.getAttribute('data-tab');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      });
+    });
+
+    // Theme selection
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.addEventListener('click', () => {
+        const theme = option.getAttribute('data-theme');
+        currentTheme = theme;
+        document.documentElement.classList.toggle('light-theme', theme === 'light');
+        vscode.postMessage({ type: 'themeChanged', theme });
+        
+        document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+      });
+    });
+
+    // Chat behavior settings
+    document.getElementById('agent-mode-default').addEventListener('change', (e) => {
+      vscode.postMessage({ type: 'settingChanged', setting: 'aiAssistant.agentMode', value: e.target.checked });
+    });
+
+    // Inline completion setting
+    document.getElementById('inline-completion').addEventListener('change', (e) => {
+      vscode.postMessage({ type: 'settingChanged', setting: 'aiAssistant.inlineCompletion', value: e.target.checked });
+    });
+
+    // Context lines setting
+    document.getElementById('context-lines').addEventListener('change', (e) => {
+      vscode.postMessage({ type: 'settingChanged', setting: 'aiAssistant.contextLines', value: parseInt(e.target.value) });
+    });
+
+    // Data management
+    document.getElementById('clear-history-btn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all chat history? This cannot be undone.')) {
+        vscode.postMessage({ type: 'clearChatHistory' });
+      }
+    });
+
+    document.getElementById('export-settings-btn').addEventListener('click', () => {
+      vscode.postMessage({ type: 'exportSettings' });
+    });
+
+    // Listen for messages from the extension
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (msg.type === 'providers_loaded') {
+        renderProviders(msg.providers, msg.defaultProvider);
+      } else if (msg.type === 'permissions_loaded') {
+        renderPermissions(msg.permissions);
+      } else if (msg.type === 'settingsLoaded') {
+        loadSettings(msg.settings);
+      }
+    });
+
+    function renderProviders(providers, defaultProvider) {
+      const container = document.getElementById('providers-container');
+      container.innerHTML = '';
+      
+      Object.entries(providers).forEach(([name, config]) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="card-title">${name}</div>
+            ${defaultProvider === name ? `<span class="status-badge status-enabled">Default</span>` : ''}
+          </div>
+          <div class="form-group">
+            <label>API Key / Auth</label>
+            <input type="password" class="provider-api-key" data-provider="${name}" value="${config.api_key || ''}" placeholder="Enter API key">
+          </div>
+          <div class="form-group">
+            <label>Base URL</label>
+            <input type="text" class="provider-url" data-provider="${name}" value="${config.base_url || ''}" placeholder="https://api.example.com">
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" class="provider-model" data-provider="${name}" value="${config.model || ''}" placeholder="gpt-4">
+          </div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="updateProvider('${name}')">Save</button>
+            ${defaultProvider !== name ? `<button onclick="setDefaultProvider('${name}')">Set as Default</button>` : ''}
+            <button onclick="testConnection('${name}')">Test Connection</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderPermissions(permissions) {
+      const container = document.getElementById('permissions-container');
+      container.innerHTML = '';
+      
+      if (!permissions || Object.keys(permissions).length === 0) {
+        container.innerHTML = '<div class="card"><p style="color: var(--muted);">No tool permissions configured</p></div>';
+        return;
+      }
+
+      Object.entries(permissions).forEach(([tool, policy]) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="card-title">${tool}</div>
+            <span class="status-badge ${policy === 'allowed' ? 'status-enabled' : 'status-disabled'}">${policy}</span>
+          </div>
+          <select class="permission-policy" data-tool="${tool}" onchange="updatePermission('${tool}', this.value)">
+            <option value="allowed" ${policy === 'allowed' ? 'selected' : ''}>Allowed</option>
+            <option value="denied" ${policy === 'denied' ? 'selected' : ''}>Denied</option>
+            <option value="ask" ${policy === 'ask' ? 'selected' : ''}>Ask Each Time</option>
+          </select>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateProvider(provider) {
+      const apiKey = document.querySelector(`.provider-api-key[data-provider="${provider}"]`).value;
+      const baseUrl = document.querySelector(`.provider-url[data-provider="${provider}"]`).value;
+      const model = document.querySelector(`.provider-model[data-provider="${provider}"]`).value;
+      
+      vscode.postMessage({
+        type: 'updateProvider',
+        providerName: provider,
+        updates: { api_key: apiKey, base_url: baseUrl, model }
+      });
+    }
+
+    function setDefaultProvider(provider) {
+      vscode.postMessage({ type: 'setDefaultProvider', providerName: provider });
+    }
+
+    function testConnection(provider) {
+      vscode.postMessage({ type: 'testConnection', providerName: provider });
+    }
+
+    function updatePermission(tool, policy) {
+      vscode.postMessage({ type: 'updatePermission', toolName: tool, policy });
+    }
+
+    function loadSettings(settings) {
+      if (settings.agentMode) document.getElementById('agent-mode-default').checked = settings.agentMode;
+      if (settings.inlineCompletion !== undefined) document.getElementById('inline-completion').checked = settings.inlineCompletion;
+      if (settings.contextLines) document.getElementById('context-lines').value = settings.contextLines;
+      if (settings.theme) {
+        currentTheme = settings.theme;
+        document.documentElement.classList.toggle('light-theme', settings.theme === 'light');
+        document.querySelectorAll('.theme-option').forEach(o => {
+          o.classList.toggle('selected', o.getAttribute('data-theme') === settings.theme);
+        });
+      }
+    }
+
+    // Request initial data
+    vscode.postMessage({ type: 'getProviders' });
+    vscode.postMessage({ type: 'getPermissions' });
+    vscode.postMessage({ type: 'getSettings' });
+  </script>
+</body>
+</html>

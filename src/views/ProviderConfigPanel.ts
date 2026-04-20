@@ -36,6 +36,7 @@ export class ProviderConfigViewProvider implements vscode.WebviewViewProvider {
     // Load provider configs
     this.sendProviderConfigs();
     this.sendPermissions();
+    this.sendSettings();
 
     webviewView.webview.onDidReceiveMessage(async msg => {
       if (msg.type === 'getProviders') {
@@ -54,6 +55,16 @@ export class ProviderConfigViewProvider implements vscode.WebviewViewProvider {
         this.sendPermissionHistory(msg.toolName);
       } else if (msg.type === 'clearPermissionHistory') {
         await this.handleClearPermissionHistory(msg.toolName);
+      } else if (msg.type === 'getSettings') {
+        this.sendSettings();
+      } else if (msg.type === 'settingChanged') {
+        await this.handleSettingChanged(msg.setting, msg.value);
+      } else if (msg.type === 'themeChanged') {
+        await this.handleThemeChanged(msg.theme);
+      } else if (msg.type === 'clearChatHistory') {
+        await this.handleClearChatHistory();
+      } else if (msg.type === 'exportSettings') {
+        await this.handleExportSettings();
       }
     });
   }
@@ -189,6 +200,116 @@ export class ProviderConfigViewProvider implements vscode.WebviewViewProvider {
         type: 'error', 
         message: `Failed to clear permission history: ${error instanceof Error ? error.message : String(error)}` 
       });
+    }
+  }
+
+  private sendSettings(): void {
+    try {
+      const config = vscode.workspace.getConfiguration('aiAssistant');
+      const settings = {
+        agentMode: config.get<boolean>('agentMode', true),
+        inlineCompletion: config.get<boolean>('inlineCompletion', true),
+        contextLines: config.get<number>('contextLines', 50),
+        theme: config.get<string>('theme', 'dark'),
+      };
+      
+      this.view?.webview.postMessage({
+        type: 'settingsLoaded',
+        settings
+      });
+    } catch (error) {
+      console.error('Failed to send settings:', error);
+    }
+  }
+
+  private async handleSettingChanged(setting: string, value: any): Promise<void> {
+    try {
+      const config = vscode.workspace.getConfiguration();
+      await config.update(setting, value, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(`Setting updated: ${setting}`);
+    } catch (error) {
+      console.error('Failed to update setting:', error);
+      if (this.view) {
+        this.view.webview.postMessage({
+          type: 'error',
+          message: `Failed to update setting: ${error instanceof Error ? error.message : String(error)}`
+        });
+      }
+    }
+  }
+
+  private async handleThemeChanged(theme: string): Promise<void> {
+    try {
+      const config = vscode.workspace.getConfiguration();
+      await config.update('aiAssistant.theme', theme, vscode.ConfigurationTarget.Global);
+      
+      // Broadcast theme change to all webviews
+      vscode.commands.executeCommand('aiAssistant.applyTheme', theme);
+    } catch (error) {
+      console.error('Failed to change theme:', error);
+      if (this.view) {
+        this.view.webview.postMessage({
+          type: 'error',
+          message: `Failed to change theme: ${error instanceof Error ? error.message : String(error)}`
+        });
+      }
+    }
+  }
+
+  private async handleClearChatHistory(): Promise<void> {
+    try {
+      const { ChatHistoryService } = await import('../core/ChatHistory');
+      const historyService = ChatHistoryService.getInstance();
+      
+      const confirmed = await vscode.window.showWarningMessage(
+        'Clear all chat history? This cannot be undone.',
+        { modal: true },
+        'Clear'
+      );
+      
+      if (confirmed === 'Clear') {
+        const sessions = historyService.getAllSessions();
+        for (const session of sessions) {
+          await historyService.clearHistory(session);
+        }
+        
+        vscode.window.showInformationMessage('Chat history cleared');
+        if (this.view) {
+          this.view.webview.postMessage({ type: 'history_cleared' });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to clear chat history:', error);
+      if (this.view) {
+        this.view.webview.postMessage({
+          type: 'error',
+          message: `Failed to clear chat history: ${error instanceof Error ? error.message : String(error)}`
+        });
+      }
+    }
+  }
+
+  private async handleExportSettings(): Promise<void> {
+    try {
+      const config = vscode.workspace.getConfiguration();
+      const aiConfig = config.inspect('aiAssistant');
+      
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const filename = `ai-settings-${timestamp}.json`;
+      
+      // Copy to clipboard
+      const settingsJson = JSON.stringify(aiConfig, null, 2);
+      await vscode.env.clipboard.writeText(settingsJson);
+      
+      vscode.window.showInformationMessage('Settings exported to clipboard');
+    } catch (error) {
+      console.error('Failed to export settings:', error);
+      if (this.view) {
+        this.view.webview.postMessage({
+          type: 'error',
+          message: `Failed to export settings: ${error instanceof Error ? error.message : String(error)}`
+        });
+      }
     }
   }
 

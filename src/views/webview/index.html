@@ -668,35 +668,156 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 8px;
+    padding: 8px 12px;
     background: rgba(139, 92, 246, 0.1);
     border-bottom: 1px solid rgba(139, 92, 246, 0.2);
     font-size: 10px;
     color: var(--muted);
-    border-radius: 6px 6px 0 0;
+    border-radius: 8px 8px 0 0;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    gap: 12px;
+  }
+
+  .code-lang {
+    flex: 0 0 auto;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .code-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-action-btn {
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .code-action-btn:hover {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: rgba(139, 92, 246, 0.5);
+  }
+
+  .code-action-btn:active {
+    background: rgba(139, 92, 246, 0.35);
+    transform: scale(0.98);
+  }
+
+  .code-action-btn.copied {
+    background: rgba(34, 197, 94, 0.3);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #86efac;
+  }
+
+  .code-block-wrapper {
+    margin: 8px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: var(--bg-secondary);
+    max-height: 400px;
+    transition: max-height 0.3s ease;
+  }
+
+  .code-block-wrapper.expanded {
+    max-height: none;
+  }
+
+  .code-pre {
+    margin: 0;
+    overflow-x: auto;
+    max-height: 350px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tool-message {
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 6px 0;
+  }
+
+  .tool-header {
+    font-size: 10px;
+    opacity: 0.8;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .tool-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg);
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+
+  .tool-content {
+    background: var(--code-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .tool-content pre {
+    margin: 0;
+    padding: 8px;
+    background: var(--code-bg);
+    border: none;
+    font-size: 10px;
+  }
+
+  .inline-code {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    color: var(--accent);
   }
 
   .code-copy-btn {
     background: rgba(139, 92, 246, 0.2);
-    border: none;
+    border: 1px solid rgba(139, 92, 246, 0.3);
     color: var(--accent);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 9px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
   }
 
+  .code-copy-btn:hover {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: rgba(139, 92, 246, 0.5);
+  }
+
   .code-copy-btn:active {
     background: rgba(139, 92, 246, 0.35);
+    transform: scale(0.98);
   }
 
   .code-copy-btn.copied {
     background: rgba(34, 197, 94, 0.3);
+    border-color: rgba(34, 197, 94, 0.5);
     color: #86efac;
   }
 
@@ -1079,7 +1200,6 @@
       </select>
       <span class="mode-badge" id="mode-badge" aria-label="Current mode">chat</span>
     </div>
-    <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="T">🌙</button>
     <button class="icon-btn" id="shortcuts-btn" aria-label="Shortcuts" title="?">?</button>
     <button class="hamburger" id="hamburger" aria-label="Menu">
       <span></span>
@@ -1107,7 +1227,6 @@
       <div class="shortcut-item"><span class="shortcut-desc">New line</span><span class="shortcut-key">Shift+Enter</span></div>
       <div class="shortcut-item"><span class="shortcut-desc">Focus input</span><span class="shortcut-key">Ctrl+K</span></div>
       <div class="shortcut-item"><span class="shortcut-desc">Agent mode</span><span class="shortcut-key">Ctrl+Shift+A</span></div>
-      <div class="shortcut-item"><span class="shortcut-desc">Toggle theme</span><span class="shortcut-key">T</span></div>
       <div class="shortcut-item"><span class="shortcut-desc">Show shortcuts</span><span class="shortcut-key">?</span></div>
       <div class="shortcut-item"><span class="shortcut-desc">Close modal</span><span class="shortcut-key">Esc</span></div>
     </div>
@@ -1138,7 +1257,7 @@
 
 <script>
 const vscode = acquireVsCodeApi();
-const state = vscode.getState() || { history: [], agentMode: false, selectedProvider: 'ollama', selectedModel: '', theme: 'dark' };
+const state = vscode.getState() || { history: [], agentMode: false, selectedProvider: 'ollama', selectedModel: '' };
 
 const messagesEl = document.getElementById('messages');
 const promptEl = document.getElementById('prompt');
@@ -1149,7 +1268,6 @@ const providerSelect = document.getElementById('provider-select');
 const modelSelect = document.getElementById('model-select');
 const mobileProviderSelect = document.getElementById('mobile-provider-select');
 const mobileModelSelect = document.getElementById('mobile-model-select');
-const themeToggle = document.getElementById('theme-toggle');
 const shortcutsBtn = document.getElementById('shortcuts-btn');
 const shortcutsModal = document.getElementById('shortcuts-modal');
 const loadingInfo = document.getElementById('loading-info');
@@ -1166,7 +1284,6 @@ providerSelect.value = state.selectedProvider;
 mobileProviderSelect.value = state.selectedProvider;
 modelSelect.value = state.selectedModel;
 mobileModelSelect.value = state.selectedModel;
-applyTheme(state.theme);
 updateBadge();
 updateModelOptions();
 
@@ -1205,12 +1322,6 @@ agentCb.addEventListener('change', () => {
   updateBadge();
 });
 
-themeToggle.addEventListener('click', () => {
-  state.theme = state.theme === 'dark' ? 'light' : 'dark';
-  vscode.setState(state);
-  applyTheme(state.theme);
-});
-
 shortcutsBtn.addEventListener('click', () => shortcutsModal.classList.toggle('open'));
 hamburger.addEventListener('click', () => headerMenu.classList.toggle('open'));
 
@@ -1220,7 +1331,6 @@ shortcutsModal.addEventListener('click', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === '?') { e.preventDefault(); shortcutsModal.classList.toggle('open'); }
-  if ((e.key === 't' || e.key === 'T') && document.activeElement !== promptEl && !e.ctrlKey && !e.metaKey) { e.preventDefault(); themeToggle.click(); }
   if (e.key === 'Escape') { shortcutsModal.classList.remove('open'); headerMenu.classList.remove('open'); }
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); promptEl.focus(); }
 });
@@ -1316,13 +1426,51 @@ function setLoading(on) {
 }
 
 function renderMarkdown(text) {
-  return text.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
-    const trimmed = code.trim();
-    let hl = trimmed;
-    if (lang && hljs.getLanguage(lang)) hl = hljs.highlight(trimmed, { language: lang }).value;
-    else hl = hljs.highlightAuto(trimmed).value;
-    return `<div class="code-header"><span>${escapeHtml(lang || 'code')}</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="hljs">${hl}</code></pre>`;
-  }).replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>').replace(/^(.+)$/gm, '<p>$1</p>');
+  return text
+    // Code blocks with enhanced formatting
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
+      const trimmed = code.trim();
+      let hl = trimmed;
+      const langName = lang || 'text';
+      if (lang && hljs.getLanguage(lang)) {
+        hl = hljs.highlight(trimmed, { language: lang }).value;
+      } else {
+        hl = hljs.highlightAuto(trimmed).value;
+      }
+      const encodedCode = btoa(unescape(encodeURIComponent(trimmed)));
+      return `<div class="code-block-wrapper">
+        <div class="code-header">
+          <span class="code-lang">${escapeHtml(langName)}</span>
+          <div class="code-actions">
+            <button class="code-action-btn code-copy-btn" onclick="copyCode(this)" title="Copy code">📋 Copy</button>
+            <button class="code-action-btn code-insert-btn" onclick="insertCode(this, '${encodedCode}')" title="Insert into editor">➕ Insert</button>
+            <button class="code-action-btn code-expand-btn" onclick="toggleCodeExpand(this)" title="Expand/Collapse">⬇️ Expand</button>
+          </div>
+        </div>
+        <pre class="code-pre"><code class="hljs">${hl}</code></pre>
+      </div>`;
+    })
+    // Inline code
+    .replace(/`([^`]+)`/g, (_, c) => `<code class="inline-code">${escapeHtml(c)}</code>`)
+    // Bold
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // Links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+    // Lists
+    .replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    // Numbered lists
+    .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+    // Paragraphs
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+    .replace(/^(.+)$/gm, '<p>$1</p>')
+    // Clean up empty paragraphs
+    .replace(/<p><\/p>/g, '')
+    // Clean up multiple closing tags
+    .replace(/<\/p><p>/g, '</p><p>');
 }
 
 function escapeHtml(s) {
@@ -1330,13 +1478,74 @@ function escapeHtml(s) {
 }
 
 function copyCode(btn) {
-  navigator.clipboard.writeText(btn.closest('.code-header').nextElementSibling.querySelector('code').textContent).then(() => {
+  const codeBlock = btn.closest('.code-block-wrapper') || btn.closest('.code-header');
+  const codeElement = codeBlock.querySelector('code');
+  const codeToCopy = codeElement.textContent;
+  const langName = codeBlock.querySelector('.code-lang')?.textContent || 'code';
+  
+  navigator.clipboard.writeText(codeToCopy).then(() => {
     const orig = btn.textContent;
-    btn.textContent = 'Copied!';
+    btn.textContent = '✅ Copied!';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+    setTimeout(() => { 
+      btn.textContent = orig; 
+      btn.classList.remove('copied'); 
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    btn.textContent = '❌ Failed';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
   });
 }
+
+function insertCode(btn, encodedCode) {
+  const code = decodeURIComponent(escape(atob(encodedCode)));
+  const langName = btn.closest('.code-header').querySelector('.code-lang').textContent;
+  
+  vscode.postMessage({
+    type: 'insertCode',
+    code: code,
+    language: langName
+  });
+  
+  btn.textContent = '✅ Inserted!';
+  btn.classList.add('copied');
+  const orig = btn.textContent;
+  setTimeout(() => { 
+    btn.textContent = '➕ Insert';
+    btn.classList.remove('copied'); 
+  }, 2000);
+}
+
+function toggleCodeExpand(btn) {
+  const codeBlock = btn.closest('.code-block-wrapper');
+  const pre = codeBlock.querySelector('.code-pre');
+  const isExpanded = codeBlock.classList.contains('expanded');
+  
+  if (isExpanded) {
+    codeBlock.classList.remove('expanded');
+    btn.textContent = '⬇️ Expand';
+  } else {
+    codeBlock.classList.add('expanded');
+    btn.textContent = '⬆️ Collapse';
+  }
+}
+
+function copyToolResult(btn) {
+  const toolMessage = btn.closest('.tool-message');
+  const textToCopy = toolMessage.querySelector('.tool-content').textContent;
+  
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { 
+      btn.textContent = orig; 
+      btn.classList.remove('copied'); 
+    }, 2000);
+  });
+}
+
 
 function copyMessage(btn) {
   navigator.clipboard.writeText(btn.closest('.message-bubble').textContent).then(() => {
@@ -1386,6 +1595,9 @@ window.addEventListener('message', (event) => {
       setLoading(false);
       currentAssistantEl = null;
       break;
+    case 'themeChanged':
+      applyTheme(msg.theme);
+      break;
     case 'error':
       if (currentAssistantEl) currentAssistantEl.closest('.message').remove();
       currentAssistantEl = null;
@@ -1403,10 +1615,30 @@ function handleAgentUpdate(update) {
       break;
     case 'tool_call':
       currentAssistantEl = null;
-      appendMessage('assistant', `<div class="tool-header">🔧 Call</div><strong>${escapeHtml(update.name)}</strong><pre>${escapeHtml(JSON.stringify(update.args, null, 2))}</pre>`, 'tool');
+      const callArgs = typeof update.args === 'string' ? update.args : JSON.stringify(update.args, null, 2);
+      appendMessage('assistant', `
+        <div class="tool-message">
+          <div class="tool-header">🔧 Tool Call</div>
+          <div class="tool-name">${escapeHtml(update.name)}</div>
+          <div class="tool-content">
+            <pre><code class="hljs language-json">${escapeHtml(callArgs)}</code></pre>
+          </div>
+          <button class="code-action-btn code-copy-btn" onclick="copyToolResult(this)" style="margin-top: 8px;">📋 Copy Args</button>
+        </div>
+      `, 'tool');
       break;
     case 'tool_result':
-      appendMessage('assistant', `<div class="tool-header">✅ ${escapeHtml(update.name)}</div><pre>${escapeHtml(update.result)}</pre>`, 'tool');
+      const result = typeof update.result === 'string' ? update.result : JSON.stringify(update.result, null, 2);
+      appendMessage('assistant', `
+        <div class="tool-message">
+          <div class="tool-header">✅ Result</div>
+          <div class="tool-name">${escapeHtml(update.name)}</div>
+          <div class="tool-content">
+            <pre><code class="hljs">${escapeHtml(result)}</code></pre>
+          </div>
+          <button class="code-action-btn code-copy-btn" onclick="copyToolResult(this)" style="margin-top: 8px;">📋 Copy Result</button>
+        </div>
+      `, 'tool');
       break;
     case 'done':
       setLoading(false);
@@ -1414,10 +1646,11 @@ function handleAgentUpdate(update) {
       break;
     case 'error':
       setLoading(false);
-      appendMessage('assistant', `<span style="color:#fca5a5">⚠ ${escapeHtml(update.message)}</span>`, 'error');
+      appendMessage('assistant', `<span style="color:#fca5a5">⚠ Agent Error: ${escapeHtml(update.message)}</span>`, 'error');
       break;
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 }
 </script>
 </body>
