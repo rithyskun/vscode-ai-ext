@@ -48,6 +48,7 @@ class ChatViewProvider {
     constructor(extensionUri) {
         this.extensionUri = extensionUri;
         this.currentSessionId = 'default';
+        this.currentSessionName = 'Default Session';
     }
     resolveWebviewView(webviewView, _context, _token) {
         this.view = webviewView;
@@ -222,7 +223,13 @@ class ChatViewProvider {
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     }
     switchSession(sessionId) {
+        console.log('[ChatPanel] Switching to session:', sessionId);
         this.currentSessionId = sessionId;
+        // Get session metadata to get the name
+        const historyService = ChatHistory_1.ChatHistoryService.getInstance();
+        const metadata = historyService.getSessionMetadata(sessionId);
+        this.currentSessionName = metadata?.name || 'Untitled Session';
+        console.log('[ChatPanel] Session name:', this.currentSessionName);
         this.loadSessionHistory();
     }
     notifyThemeChange(theme) {
@@ -234,19 +241,25 @@ class ChatViewProvider {
         });
     }
     loadSessionHistory() {
-        if (!this.view)
+        if (!this.view) {
+            console.error('[ChatPanel] View not available');
             return;
+        }
         try {
             const historyService = ChatHistory_1.ChatHistoryService.getInstance();
             const history = historyService.loadHistory(this.currentSessionId);
-            this.view.webview.postMessage({
+            console.log('[ChatPanel] Loaded history with', history.length, 'messages for session', this.currentSessionId);
+            const message = {
                 type: 'loadSession',
                 sessionId: this.currentSessionId,
+                sessionName: this.currentSessionName,
                 history
-            });
+            };
+            console.log('[ChatPanel] Posting loadSession message:', message);
+            this.view.webview.postMessage(message);
         }
         catch (error) {
-            console.error('Failed to load session history:', error);
+            console.error('[ChatPanel] Failed to load session history:', error);
         }
     }
     async handleInsertCode(code, language = 'text') {

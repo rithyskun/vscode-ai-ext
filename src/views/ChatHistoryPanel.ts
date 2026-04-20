@@ -9,6 +9,7 @@ import { ChatHistoryService } from '../core/ChatHistory';
 export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'aiAssistant.chatHistory';
   private view?: vscode.WebviewView;
+  private currentSessionId: string = 'default';
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -46,6 +47,7 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
     try {
       const historyService = ChatHistoryService.getInstance();
       const sessionId = historyService.createSession(name);
+      this.currentSessionId = sessionId;
       
       // Notify the chat panel to switch to this session
       vscode.commands.executeCommand('aiAssistant.switchSession', sessionId);
@@ -63,9 +65,14 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
 
   private async handleLoadSession(sessionId: string) {
     try {
+      console.log('[ChatHistoryPanel] Loading session:', sessionId);
+      this.currentSessionId = sessionId;
       // Notify the chat panel to switch to this session
+      console.log('[ChatHistoryPanel] Executing switchSession command');
       vscode.commands.executeCommand('aiAssistant.switchSession', sessionId);
+      this.refresh();
     } catch (error) {
+      console.error('[ChatHistoryPanel] Error loading session:', error);
       if (this.view) {
         this.view.webview.postMessage({
           type: 'error',
@@ -90,10 +97,14 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
       }
       
       await historyService.deleteSession(sessionId);
-      this.refresh();
       
-      // Notify the chat panel
-      vscode.commands.executeCommand('aiAssistant.switchSession', 'default');
+      // If we deleted the current session, switch to default
+      if (sessionId === this.currentSessionId) {
+        this.currentSessionId = 'default';
+        vscode.commands.executeCommand('aiAssistant.switchSession', 'default');
+      }
+      
+      this.refresh();
     } catch (error) {
       if (this.view) {
         this.view.webview.postMessage({
@@ -133,7 +144,8 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
         messageCount: s.messageCount,
         createdAt: new Date(s.createdAt).toLocaleString(),
         updatedAt: new Date(s.updatedAt).toLocaleString()
-      }))
+      })),
+      currentSessionId: this.currentSessionId
     });
   }
 
@@ -369,6 +381,7 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
     window.addEventListener('message', event => {
       const msg = event.data;
       if (msg.type === 'sessionsList') {
+        currentSessionId = msg.currentSessionId || 'default';
         renderSessions(msg.sessions);
       } else if (msg.type === 'error') {
         showError(msg.message);
@@ -404,26 +417,33 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
           </div>
         \`;
 
-        item.addEventListener('click', (e) => {
-          if (!e.target.closest('.action-btn')) {
-            currentSessionId = session.id;
-            vscode.postMessage({ type: 'loadSession', sessionId: session.id });
+        // Add click listener to the entire item
+        item.addEventListener('click', function(e) {
+          // If clicking on an action button, don't load the session
+          if (e.target.closest('.action-btn')) {
+            return;
           }
+          // Load the session
+          currentSessionId = session.id;
+          console.log('Loading session:', session.id);
+          vscode.postMessage({ type: 'loadSession', sessionId: session.id });
         });
 
         container.appendChild(item);
       });
 
-      // Add event listeners to action buttons
+      // Add event listeners to action buttons AFTER all items are added
       document.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', function(e) {
           e.stopPropagation();
-          const action = btn.getAttribute('data-action');
-          const sessionId = btn.getAttribute('data-session');
+          const action = this.getAttribute('data-action');
+          const sessionId = this.getAttribute('data-session');
 
           if (action === 'delete') {
+            console.log('Deleting session:', sessionId);
             vscode.postMessage({ type: 'deleteSession', sessionId });
           } else if (action === 'rename') {
+            console.log('Renaming session:', sessionId);
             promptForRename(sessionId);
           }
         });

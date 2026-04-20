@@ -70,16 +70,7 @@
   }
 
   #header {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    background: var(--bg-secondary);
-    flex-wrap: wrap;
-    gap: 8px;
-    position: relative;
+    display: none;
   }
 
   .header-left {
@@ -1180,60 +1171,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
 
-<div id="header">
-  <div class="header-left">
-    <div class="header-icon">AI</div>
-    <h1>AI Assistant</h1>
-  </div>
-  <div class="header-right">
-    <div class="header-controls">
-      <select id="provider-select" class="provider-select" aria-label="Select AI provider">
-        <option value="anthropic">Anthropic</option>
-        <option value="ollama">Ollama</option>
-        <option value="openrouter">OpenRouter</option>
-      </select>
-      <div style="display: flex; align-items: center; gap: 4px;">
-        <span class="status-indicator connected" id="provider-status" aria-label="Provider status"></span>
-      </div>
-      <select id="model-select" class="model-select" aria-label="Select model">
-        <option value="">Model</option>
-      </select>
-      <span class="mode-badge" id="mode-badge" aria-label="Current mode">chat</span>
-    </div>
-    <button class="icon-btn" id="shortcuts-btn" aria-label="Shortcuts" title="?">?</button>
-    <button class="hamburger" id="hamburger" aria-label="Menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-  </div>
-  <div class="header-menu" id="header-menu">
-    <select id="mobile-provider-select" class="menu-select" aria-label="Select provider">
-      <option value="anthropic">Anthropic</option>
-      <option value="ollama">Ollama</option>
-      <option value="openrouter">OpenRouter</option>
-    </select>
-    <select id="mobile-model-select" class="menu-select" aria-label="Select model">
-      <option value="">Default Model</option>
-    </select>
-  </div>
-</div>
-
-<div class="shortcuts-modal" id="shortcuts-modal" role="dialog" aria-labelledby="shortcuts-title">
-  <div class="shortcuts-content">
-    <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
-    <div class="shortcuts-list">
-      <div class="shortcut-item"><span class="shortcut-desc">Send</span><span class="shortcut-key">Enter</span></div>
-      <div class="shortcut-item"><span class="shortcut-desc">New line</span><span class="shortcut-key">Shift+Enter</span></div>
-      <div class="shortcut-item"><span class="shortcut-desc">Focus input</span><span class="shortcut-key">Ctrl+K</span></div>
-      <div class="shortcut-item"><span class="shortcut-desc">Agent mode</span><span class="shortcut-key">Ctrl+Shift+A</span></div>
-      <div class="shortcut-item"><span class="shortcut-desc">Show shortcuts</span><span class="shortcut-key">?</span></div>
-      <div class="shortcut-item"><span class="shortcut-desc">Close modal</span><span class="shortcut-key">Esc</span></div>
-    </div>
-  </div>
-</div>
-
 <div id="messages"></div>
+
+<div id="session-info" style="display: none;">
+  <div style="padding: 8px 12px; background: var(--border); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px;">
+    <span style="font-weight: 500;">📋 Session:</span>
+    <span id="session-name" style="color: var(--fg); font-weight: 500;"></span>
+  </div>
+</div>
 
 <div id="input-container">
   <div id="agent-toggle">
@@ -1263,58 +1208,17 @@ const messagesEl = document.getElementById('messages');
 const promptEl = document.getElementById('prompt');
 const sendBtn = document.getElementById('send-btn');
 const agentCb = document.getElementById('agent-cb');
-const modeBadge = document.getElementById('mode-badge');
-const providerSelect = document.getElementById('provider-select');
-const modelSelect = document.getElementById('model-select');
-const mobileProviderSelect = document.getElementById('mobile-provider-select');
-const mobileModelSelect = document.getElementById('mobile-model-select');
-const shortcutsBtn = document.getElementById('shortcuts-btn');
-const shortcutsModal = document.getElementById('shortcuts-modal');
 const loadingInfo = document.getElementById('loading-info');
 const waitTimeEl = document.getElementById('wait-time');
 const cancelBtn = document.getElementById('cancel-btn');
-const hamburger = document.getElementById('hamburger');
-const headerMenu = document.getElementById('header-menu');
 
 let loadingStartTime = null;
 let loadingInterval = null;
 
 agentCb.checked = state.agentMode;
-providerSelect.value = state.selectedProvider;
-mobileProviderSelect.value = state.selectedProvider;
-modelSelect.value = state.selectedModel;
-mobileModelSelect.value = state.selectedModel;
 updateBadge();
-updateModelOptions();
 
-const syncProvider = (sel) => {
-  sel.addEventListener('change', () => {
-    state.selectedProvider = sel.value;
-    state.selectedModel = '';
-    providerSelect.value = state.selectedProvider;
-    mobileProviderSelect.value = state.selectedProvider;
-    modelSelect.value = '';
-    mobileModelSelect.value = '';
-    vscode.setState(state);
-    vscode.postMessage({ type: 'changeProvider', provider: sel.value });
-    updateModelOptions();
-  });
-};
 
-const syncModel = (sel) => {
-  sel.addEventListener('change', () => {
-    state.selectedModel = sel.value;
-    modelSelect.value = sel.value;
-    mobileModelSelect.value = sel.value;
-    vscode.setState(state);
-    vscode.postMessage({ type: 'changeModel', model: sel.value });
-  });
-};
-
-syncProvider(providerSelect);
-syncProvider(mobileProviderSelect);
-syncModel(modelSelect);
-syncModel(mobileModelSelect);
 
 agentCb.addEventListener('change', () => {
   state.agentMode = agentCb.checked;
@@ -1322,16 +1226,10 @@ agentCb.addEventListener('change', () => {
   updateBadge();
 });
 
-shortcutsBtn.addEventListener('click', () => shortcutsModal.classList.toggle('open'));
-hamburger.addEventListener('click', () => headerMenu.classList.toggle('open'));
 
-shortcutsModal.addEventListener('click', (e) => {
-  if (e.target === shortcutsModal) shortcutsModal.classList.remove('open');
-});
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === '?') { e.preventDefault(); shortcutsModal.classList.toggle('open'); }
-  if (e.key === 'Escape') { shortcutsModal.classList.remove('open'); headerMenu.classList.remove('open'); }
+  if (e.key === 'Escape') { }
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); promptEl.focus(); }
 });
 
@@ -1343,20 +1241,14 @@ sendBtn.addEventListener('click', sendMessage);
 
 function applyTheme(theme) {
   document.documentElement.classList.toggle('light-theme', theme === 'light');
-  themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
 }
 
 function updateBadge() {
-  modeBadge.textContent = state.agentMode ? 'agent' : 'chat';
+  // Badge removed with header
 }
 
 function updateModelOptions() {
-  const provider = providerSelect.value;
-  [modelSelect, mobileModelSelect].forEach(sel => {
-    sel.innerHTML = '<option value="">Model</option>';
-    const models = provider === 'openrouter' ? ['google/gemma-2-9b-it:free', 'meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen-2.5-7b-instruct:free', 'mistralai/mistral-7b-instruct:free'] : provider === 'ollama' ? ['qwen2.5-coder:7b', 'llama3.2', 'mistral'] : ['claude-haiku-4-5-20251001', 'claude-3-5-sonnet-20241022'];
-    models.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m.split('/').pop().replace(':free', ''); sel.appendChild(opt); });
-  });
+  // Model options removed with header
 }
 
 function sendMessage() {
@@ -1366,7 +1258,6 @@ function sendMessage() {
   promptEl.style.height = 'auto';
   appendMessage('user', escapeHtml(text));
   setLoading(true);
-  headerMenu.classList.remove('open');
   vscode.postMessage({ type: 'chat', text, agentMode: state.agentMode, history: state.history });
 }
 
@@ -1588,6 +1479,17 @@ window.addEventListener('message', (event) => {
       // Load session history
       state.history = msg.history || [];
       vscode.setState(state);
+      
+      // Update session info display
+      const sessionInfo = document.getElementById('session-info');
+      const sessionName = document.getElementById('session-name');
+      if (msg.sessionName && msg.sessionName !== 'Default Session') {
+        sessionName.textContent = msg.sessionName;
+        sessionInfo.style.display = 'block';
+      } else {
+        sessionInfo.style.display = 'none';
+      }
+      
       messagesEl.innerHTML = '';
       state.history.forEach(msg => {
         appendMessage(msg.role, msg.role === 'assistant' ? renderMarkdown(msg.content) : escapeHtml(msg.content));
@@ -1650,7 +1552,6 @@ function handleAgentUpdate(update) {
       break;
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
-}
 }
 </script>
 </body>

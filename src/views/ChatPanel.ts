@@ -15,6 +15,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'aiAssistant.chatView';
   private view?: vscode.WebviewView;
   private currentSessionId: string = 'default';
+  private currentSessionName: string = 'Default Session';
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -222,7 +223,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   }
 
   public switchSession(sessionId: string) {
+    console.log('[ChatPanel] Switching to session:', sessionId);
     this.currentSessionId = sessionId;
+    
+    // Get session metadata to get the name
+    const historyService = ChatHistoryService.getInstance();
+    const metadata = historyService.getSessionMetadata(sessionId);
+    this.currentSessionName = metadata?.name || 'Untitled Session';
+    
+    console.log('[ChatPanel] Session name:', this.currentSessionName);
     this.loadSessionHistory();
   }
 
@@ -236,19 +245,28 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   }
 
   private loadSessionHistory() {
-    if (!this.view) return;
+    if (!this.view) {
+      console.error('[ChatPanel] View not available');
+      return;
+    }
 
     try {
       const historyService = ChatHistoryService.getInstance();
       const history = historyService.loadHistory(this.currentSessionId);
       
-      this.view.webview.postMessage({
+      console.log('[ChatPanel] Loaded history with', history.length, 'messages for session', this.currentSessionId);
+      
+      const message = {
         type: 'loadSession',
         sessionId: this.currentSessionId,
+        sessionName: this.currentSessionName,
         history
-      });
+      };
+      
+      console.log('[ChatPanel] Posting loadSession message:', message);
+      this.view.webview.postMessage(message);
     } catch (error) {
-      console.error('Failed to load session history:', error);
+      console.error('[ChatPanel] Failed to load session history:', error);
     }
   }
 
