@@ -131,6 +131,13 @@ export function activate(context: vscode.ExtensionContext) {
       if (chatProvider) {
         chatProvider.notifyThemeChange(appliedTheme);
       }
+    }),
+
+    vscode.commands.registerCommand('aiAssistant.refreshHistory', () => {
+      // Refresh the history panel when session name changes
+      if (chatHistoryProvider) {
+        chatHistoryProvider.refresh();
+      }
     })
   );
 

@@ -360,6 +360,18 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
     <button id="new-session-btn">+ New</button>
   </div>
   <div id="error-message" class="error-message"></div>
+  
+  <div id="new-session-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; max-width: 400px; width: 90%; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px;">
+      <div style="font-weight: 600; color: var(--fg); font-size: 14px;">Create New Session</div>
+      <input id="session-name-input" type="text" placeholder="Session name (optional)" style="background: var(--input-bg); color: var(--fg); border: 1px solid var(--input-border); border-radius: 6px; padding: 10px; font-size: 13px; font-family: inherit;" />
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="modal-cancel-btn" style="background: transparent; border: 1px solid var(--border); color: var(--fg); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit;">Cancel</button>
+        <button id="modal-create-btn" style="background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit;">Create</button>
+      </div>
+    </div>
+  </div>
+  
   <div id="sessions-container">
     <div id="empty-state">
       <p>No sessions yet</p>
@@ -372,10 +384,8 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
     let currentSessionId = null;
 
     document.getElementById('new-session-btn').addEventListener('click', async () => {
-      const name = await promptForSessionName();
-      if (name !== null) {
-        vscode.postMessage({ type: 'newSession', name: name || undefined });
-      }
+      // Create new session without prompting for name - name will be set from first message
+      vscode.postMessage({ type: 'newSession', name: 'New Chat' });
     });
 
     window.addEventListener('message', event => {
@@ -455,11 +465,95 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
       return input;
     }
 
+    function showNewSessionModal() {
+      const modal = document.getElementById('new-session-modal');
+      const input = document.getElementById('session-name-input');
+      const createBtn = document.getElementById('modal-create-btn');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      
+      modal.style.display = 'flex';
+      input.value = '';
+      input.focus();
+      
+      const handleCreate = () => {
+        const name = input.value.trim();
+        closeNewSessionModal();
+        vscode.postMessage({ type: 'newSession', name: name || undefined });
+      };
+      
+      const handleCancel = () => {
+        closeNewSessionModal();
+      };
+      
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+          handleCreate();
+        } else if (e.key === 'Escape') {
+          handleCancel();
+        }
+      };
+      
+      createBtn.onclick = handleCreate;
+      cancelBtn.onclick = handleCancel;
+      input.onkeydown = handleKeyDown;
+    }
+    
+    function closeNewSessionModal() {
+      const modal = document.getElementById('new-session-modal');
+      modal.style.display = 'none';
+      document.getElementById('session-name-input').onkeydown = null;
+      document.getElementById('modal-create-btn').onclick = null;
+      document.getElementById('modal-cancel-btn').onclick = null;
+    }
+
     async function promptForRename(sessionId) {
-      const input = prompt('Enter new session name:');
-      if (input !== null) {
-        vscode.postMessage({ type: 'renameSession', sessionId, newName: input });
-      }
+      const modal = document.getElementById('new-session-modal');
+      const input = document.getElementById('session-name-input');
+      const createBtn = document.getElementById('modal-create-btn');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      
+      // Reuse the modal for rename
+      const titleDiv = modal.querySelector('div:first-child');
+      const originalTitle = titleDiv.textContent;
+      titleDiv.textContent = 'Rename Session';
+      createBtn.textContent = 'Rename';
+      
+      const session = currentSessionId === sessionId ? 
+        { name: currentSessionId } : 
+        { name: '' };
+      
+      modal.style.display = 'flex';
+      input.value = session.name;
+      input.focus();
+      input.select();
+      
+      const handleRename = () => {
+        const newName = input.value.trim();
+        closeNewSessionModal();
+        titleDiv.textContent = originalTitle;
+        createBtn.textContent = 'Create';
+        if (newName) {
+          vscode.postMessage({ type: 'renameSession', sessionId, newName });
+        }
+      };
+      
+      const handleCancel = () => {
+        closeNewSessionModal();
+        titleDiv.textContent = originalTitle;
+        createBtn.textContent = 'Create';
+      };
+      
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+          handleRename();
+        } else if (e.key === 'Escape') {
+          handleCancel();
+        }
+      };
+      
+      createBtn.onclick = handleRename;
+      cancelBtn.onclick = handleCancel;
+      input.onkeydown = handleKeyDown;
     }
 
     function showError(message) {

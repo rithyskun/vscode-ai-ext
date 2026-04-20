@@ -61,6 +61,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       const { contextLines } = getConfig();
       const { systemPrompt, messages } = buildContext(rawHistory, userMessage, contextLines);
 
+      // Auto-generate session name from first message if this is a new session
+      if ((this.currentSessionName === 'New Chat' || rawHistory.length === 0) && userMessage.trim()) {
+        const generatedName = this.generateSessionNameFromMessage(userMessage);
+        this.updateSessionName(generatedName);
+      }
+
       // Save user message to history
       const historyService = ChatHistoryService.getInstance();
       await historyService.saveMessage(this.currentSessionId, 'user', userMessage);
@@ -68,8 +74,21 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       if (agentMode) {
         // Agent mode: tool-calling loop
         const updates: ChatMessage[] = [];
+        let assistantText = '';
+        
         for await (const update of runAgent(provider, userMessage, rawHistory, () => {})) {
           this.view.webview.postMessage({ type: 'agent_update', update });
+          
+          // Collect all text updates for history
+          if (update.type === 'text') {
+            assistantText = update.content;
+            updates.push({ role: 'assistant', content: assistantText });
+          }
+        }
+        
+        // Save assistant message to history if we got any text response
+        if (assistantText) {
+          await historyService.saveMessage(this.currentSessionId, 'assistant', assistantText);
         }
       } else {
         // Chat mode: streaming
@@ -289,6 +308,38 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to insert code: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  private generateSessionNameFromMessage(message: string): string {
+    // Extract first 1-2 lines or first 50 characters
+    const lines = message.split('\n');
+    const firstLine = lines[0].trim();
+    
+    // Use first line, truncated to 50 chars, or combine first two lines if first is too short
+    let sessionName = firstLine;
+    if (sessionName.length > 50) {
+      sessionName = sessionName.substring(0, 50) + '…';
+    } else if (sessionName.length < 20 && lines.length > 1) {
+      // If first line is too short, include second line too
+      const secondLine = lines[1].trim();
+      sessionName = firstLine + ' ' + secondLine;
+      if (sessionName.length > 50) {
+        sessionName = sessionName.substring(0, 50) + '…';
+      }
+    }
+    
+    return sessionName || 'Untitled Chat';
+  }
+
+  private updateSessionName(newName: string) {
+    console.log('[ChatPanel] Updating session name from', this.currentSessionName, 'to', newName);
+    
+    const historyService = ChatHistoryService.getInstance();
+    historyService.renameSession(this.currentSessionId, newName);
+    this.currentSessionName = newName;
+    
+    // Notify history panel to refresh
+    vscode.commands.executeCommand('aiAssistant.refreshHistory');
   }
 
   private getHtml(): string {

@@ -136,6 +136,11 @@ function activate(context) {
         if (chatProvider) {
             chatProvider.notifyThemeChange(appliedTheme);
         }
+    }), vscode.commands.registerCommand('aiAssistant.refreshHistory', () => {
+        // Refresh the history panel when session name changes
+        if (chatHistoryProvider) {
+            chatHistoryProvider.refresh();
+        }
     }));
     // ── Status bar item ───────────────────────────────────────────────────────
     const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
