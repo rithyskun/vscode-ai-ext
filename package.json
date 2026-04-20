@@ -20,6 +20,7 @@
     "views": {
       "aiAssistant": [
         { "type": "webview", "id": "aiAssistant.chatView", "name": "Chat" },
+        { "type": "webview", "id": "aiAssistant.chatHistory", "name": "History" },
         { "type": "webview", "id": "aiAssistant.providerConfigView", "name": "Provider Config" }
       ]
     },

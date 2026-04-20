@@ -9,10 +9,12 @@ import { getProvider, getConfig, getProviderConfig } from '../core/ModelRouter';
 import { buildContext } from '../core/ContextBuilder';
 import { runAgent } from '../core/AgentRunner';
 import { ChatMessage } from '../providers/IModelProvider';
+import { ChatHistoryService } from '../core/ChatHistory';
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'aiAssistant.chatView';
   private view?: vscode.WebviewView;
+  private currentSessionId: string = 'default';
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -29,6 +31,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     };
 
     webviewView.webview.html = this.getHtml();
+
+    // Load initial session history
+    this.loadSessionHistory();
 
     webviewView.webview.onDidReceiveMessage(async msg => {
       if (msg.type === 'chat') {
@@ -53,6 +58,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       const { contextLines } = getConfig();
       const { systemPrompt, messages } = buildContext(rawHistory, userMessage, contextLines);
 
+      // Save user message to history
+      const historyService = ChatHistoryService.getInstance();
+      await historyService.saveMessage(this.currentSessionId, 'user', userMessage);
+
       if (agentMode) {
         // Agent mode: tool-calling loop
         const updates: ChatMessage[] = [];
@@ -66,6 +75,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           accumulated += chunk;
           this.view.webview.postMessage({ type: 'stream_chunk', accumulated });
         }
+
+        // Save assistant message to history
+        await historyService.saveMessage(this.currentSessionId, 'assistant', accumulated);
 
         const updatedHistory: ChatMessage[] = [
           ...rawHistory,
@@ -205,6 +217,28 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       config.providers[provider].model = newModel;
     }
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  }
+
+  public switchSession(sessionId: string) {
+    this.currentSessionId = sessionId;
+    this.loadSessionHistory();
+  }
+
+  private loadSessionHistory() {
+    if (!this.view) return;
+
+    try {
+      const historyService = ChatHistoryService.getInstance();
+      const history = historyService.loadHistory(this.currentSessionId);
+      
+      this.view.webview.postMessage({
+        type: 'loadSession',
+        sessionId: this.currentSessionId,
+        history
+      });
+    } catch (error) {
+      console.error('Failed to load session history:', error);
+    }
   }
 
   private getHtml(): string {

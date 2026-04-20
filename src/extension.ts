@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 import { ChatViewProvider } from './views/ChatPanel';
+import { ChatHistoryViewProvider } from './views/ChatHistoryPanel';
 import { ProviderConfigViewProvider } from './views/ProviderConfigPanel';
 import { InlineCompletionProvider } from './completion/InlineCompletionProvider';
 import { getProvider, getConfig } from './core/ModelRouter';
@@ -40,6 +41,11 @@ export function activate(context: vscode.ExtensionContext) {
   const providerConfigProvider = new ProviderConfigViewProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(ProviderConfigViewProvider.viewType, providerConfigProvider)
+  );
+
+  const chatHistoryProvider = new ChatHistoryViewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(ChatHistoryViewProvider.viewType, chatHistoryProvider)
   );
 
   const completionProvider = new InlineCompletionProvider();
@@ -104,6 +110,19 @@ export function activate(context: vscode.ExtensionContext) {
         }
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to list models: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('aiAssistant.switchSession', async (sessionId?: string) => {
+      // Notify the chat panel to switch to this session
+      vscode.commands.executeCommand('aiAssistant.chatView.focus');
+      // Post message to chat panel with new session
+      if (chatProvider) {
+        chatProvider.switchSession(sessionId || 'default');
+      }
+      // Refresh history panel
+      if (chatHistoryProvider) {
+        chatHistoryProvider.refresh();
       }
     })
   );

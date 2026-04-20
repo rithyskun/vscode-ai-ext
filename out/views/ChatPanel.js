@@ -43,9 +43,11 @@ const fs = __importStar(require("fs"));
 const ModelRouter_1 = require("../core/ModelRouter");
 const ContextBuilder_1 = require("../core/ContextBuilder");
 const AgentRunner_1 = require("../core/AgentRunner");
+const ChatHistory_1 = require("../core/ChatHistory");
 class ChatViewProvider {
     constructor(extensionUri) {
         this.extensionUri = extensionUri;
+        this.currentSessionId = 'default';
     }
     resolveWebviewView(webviewView, _context, _token) {
         this.view = webviewView;
@@ -54,6 +56,8 @@ class ChatViewProvider {
             localResourceRoots: [this.extensionUri],
         };
         webviewView.webview.html = this.getHtml();
+        // Load initial session history
+        this.loadSessionHistory();
         webviewView.webview.onDidReceiveMessage(async (msg) => {
             if (msg.type === 'chat') {
                 await this.handleChat(msg.text, msg.agentMode, msg.history ?? []);
@@ -73,6 +77,9 @@ class ChatViewProvider {
             const provider = (0, ModelRouter_1.getProvider)();
             const { contextLines } = (0, ModelRouter_1.getConfig)();
             const { systemPrompt, messages } = (0, ContextBuilder_1.buildContext)(rawHistory, userMessage, contextLines);
+            // Save user message to history
+            const historyService = ChatHistory_1.ChatHistoryService.getInstance();
+            await historyService.saveMessage(this.currentSessionId, 'user', userMessage);
             if (agentMode) {
                 // Agent mode: tool-calling loop
                 const updates = [];
@@ -87,6 +94,8 @@ class ChatViewProvider {
                     accumulated += chunk;
                     this.view.webview.postMessage({ type: 'stream_chunk', accumulated });
                 }
+                // Save assistant message to history
+                await historyService.saveMessage(this.currentSessionId, 'assistant', accumulated);
                 const updatedHistory = [
                     ...rawHistory,
                     { role: 'user', content: userMessage },
@@ -208,6 +217,26 @@ class ChatViewProvider {
             config.providers[provider].model = newModel;
         }
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    }
+    switchSession(sessionId) {
+        this.currentSessionId = sessionId;
+        this.loadSessionHistory();
+    }
+    loadSessionHistory() {
+        if (!this.view)
+            return;
+        try {
+            const historyService = ChatHistory_1.ChatHistoryService.getInstance();
+            const history = historyService.loadHistory(this.currentSessionId);
+            this.view.webview.postMessage({
+                type: 'loadSession',
+                sessionId: this.currentSessionId,
+                history
+            });
+        }
+        catch (error) {
+            console.error('Failed to load session history:', error);
+        }
     }
     getHtml() {
         const htmlPath = path.join(this.extensionUri.fsPath, 'src', 'views', 'webview', 'index.html');

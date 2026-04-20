@@ -40,6 +40,7 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const ChatPanel_1 = require("./views/ChatPanel");
+const ChatHistoryPanel_1 = require("./views/ChatHistoryPanel");
 const ProviderConfigPanel_1 = require("./views/ProviderConfigPanel");
 const InlineCompletionProvider_1 = require("./completion/InlineCompletionProvider");
 const ModelRouter_1 = require("./core/ModelRouter");
@@ -69,6 +70,8 @@ function activate(context) {
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(ChatPanel_1.ChatViewProvider.viewType, chatProvider));
     const providerConfigProvider = new ProviderConfigPanel_1.ProviderConfigViewProvider(context.extensionUri);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(ProviderConfigPanel_1.ProviderConfigViewProvider.viewType, providerConfigProvider));
+    const chatHistoryProvider = new ChatHistoryPanel_1.ChatHistoryViewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(ChatHistoryPanel_1.ChatHistoryViewProvider.viewType, chatHistoryProvider));
     const completionProvider = new InlineCompletionProvider_1.InlineCompletionProvider();
     context.subscriptions.push(vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, // All files
     completionProvider));
@@ -116,6 +119,17 @@ function activate(context) {
         }
         catch (error) {
             vscode.window.showErrorMessage(`Failed to list models: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }), vscode.commands.registerCommand('aiAssistant.switchSession', async (sessionId) => {
+        // Notify the chat panel to switch to this session
+        vscode.commands.executeCommand('aiAssistant.chatView.focus');
+        // Post message to chat panel with new session
+        if (chatProvider) {
+            chatProvider.switchSession(sessionId || 'default');
+        }
+        // Refresh history panel
+        if (chatHistoryProvider) {
+            chatHistoryProvider.refresh();
         }
     }));
     // ── Status bar item ───────────────────────────────────────────────────────

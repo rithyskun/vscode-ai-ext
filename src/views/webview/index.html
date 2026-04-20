@@ -1375,6 +1375,17 @@ window.addEventListener('message', (event) => {
     case 'agent_update':
       handleAgentUpdate(msg.update);
       break;
+    case 'loadSession':
+      // Load session history
+      state.history = msg.history || [];
+      vscode.setState(state);
+      messagesEl.innerHTML = '';
+      state.history.forEach(msg => {
+        appendMessage(msg.role, msg.role === 'assistant' ? renderMarkdown(msg.content) : escapeHtml(msg.content));
+      });
+      setLoading(false);
+      currentAssistantEl = null;
+      break;
     case 'error':
       if (currentAssistantEl) currentAssistantEl.closest('.message').remove();
       currentAssistantEl = null;

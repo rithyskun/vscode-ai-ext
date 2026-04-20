@@ -6,6 +6,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { ChatMessage } from '../providers/IModelProvider';
 
+interface SessionMetadata {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  messageCount: number;
+}
+
 interface ChatHistoryData {
   [sessionId: string]: ChatMessage[];
 }
@@ -14,7 +22,9 @@ export class ChatHistoryService {
   private static instance: ChatHistoryService;
   private readonly DEFAULT_SESSION_ID = 'default';
   private readonly HISTORY_FILE = 'chat-history.json';
+  private readonly METADATA_FILE = 'session-metadata.json';
   private history: ChatHistoryData = {};
+  private metadata: { [sessionId: string]: SessionMetadata } = {};
   private storagePath: string = '';
 
   private constructor() {}
@@ -33,6 +43,8 @@ export class ChatHistoryService {
   private ensureLoaded(): void {
     if (Object.keys(this.history).length === 0 && this.storagePath) {
       const filePath = path.join(this.storagePath, this.HISTORY_FILE);
+      const metadataPath = path.join(this.storagePath, this.METADATA_FILE);
+      
       if (fs.existsSync(filePath)) {
         try {
           const data = fs.readFileSync(filePath, 'utf-8');
@@ -42,17 +54,42 @@ export class ChatHistoryService {
           this.history = {};
         }
       }
+      
+      if (fs.existsSync(metadataPath)) {
+        try {
+          const data = fs.readFileSync(metadataPath, 'utf-8');
+          this.metadata = JSON.parse(data);
+        } catch (error) {
+          console.error('Failed to load session metadata:', error);
+          this.metadata = {};
+        }
+      }
+      
+      // Ensure default session metadata exists
+      if (!this.metadata[this.DEFAULT_SESSION_ID]) {
+        this.metadata[this.DEFAULT_SESSION_ID] = {
+          id: this.DEFAULT_SESSION_ID,
+          name: 'Default Session',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          messageCount: this.history[this.DEFAULT_SESSION_ID]?.length || 0
+        };
+      }
     }
   }
 
   private save(): void {
     if (this.storagePath) {
       const filePath = path.join(this.storagePath, this.HISTORY_FILE);
+      const metadataPath = path.join(this.storagePath, this.METADATA_FILE);
       const dir = path.dirname(filePath);
+      
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
+      
       fs.writeFileSync(filePath, JSON.stringify(this.history, null, 2), 'utf-8');
+      fs.writeFileSync(metadataPath, JSON.stringify(this.metadata, null, 2), 'utf-8');
     }
   }
 
@@ -65,6 +102,21 @@ export class ChatHistoryService {
       }
       
       this.history[sessionId].push({ role, content });
+      
+      // Update metadata
+      if (!this.metadata[sessionId]) {
+        this.metadata[sessionId] = {
+          id: sessionId,
+          name: `Session ${new Date().toLocaleDateString()}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          messageCount: 1
+        };
+      } else {
+        this.metadata[sessionId].updatedAt = Date.now();
+        this.metadata[sessionId].messageCount = this.history[sessionId].length;
+      }
+      
       this.save();
     } catch (error) {
       console.error('Failed to save message:', error);
@@ -81,6 +133,21 @@ export class ChatHistoryService {
       }
       
       this.history[sessionId].push(...messages);
+      
+      // Update metadata
+      if (!this.metadata[sessionId]) {
+        this.metadata[sessionId] = {
+          id: sessionId,
+          name: `Session ${new Date().toLocaleDateString()}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          messageCount: this.history[sessionId].length
+        };
+      } else {
+        this.metadata[sessionId].updatedAt = Date.now();
+        this.metadata[sessionId].messageCount = this.history[sessionId].length;
+      }
+      
       this.save();
     } catch (error) {
       console.error('Failed to save messages:', error);
@@ -137,6 +204,62 @@ export class ChatHistoryService {
     } catch (error) {
       console.error('Failed to get message count:', error);
       return 0;
+    }
+  }
+
+  public createSession(sessionName?: string): string {
+    try {
+      this.ensureLoaded();
+      const sessionId = `session_${Date.now()}`;
+      const name = sessionName || `Session ${new Date().toLocaleDateString()}`;
+      
+      this.history[sessionId] = [];
+      this.metadata[sessionId] = {
+        id: sessionId,
+        name,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messageCount: 0
+      };
+      
+      this.save();
+      return sessionId;
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      throw new Error(`Failed to create session: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  public renameSession(sessionId: string, newName: string): void {
+    try {
+      this.ensureLoaded();
+      if (this.metadata[sessionId]) {
+        this.metadata[sessionId].name = newName;
+        this.save();
+      }
+    } catch (error) {
+      console.error('Failed to rename session:', error);
+      throw new Error(`Failed to rename session: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  public getSessionsWithMetadata(): SessionMetadata[] {
+    try {
+      this.ensureLoaded();
+      return Object.values(this.metadata).sort((a, b) => b.updatedAt - a.updatedAt);
+    } catch (error) {
+      console.error('Failed to get sessions with metadata:', error);
+      return [];
+    }
+  }
+
+  public getSessionMetadata(sessionId: string): SessionMetadata | undefined {
+    try {
+      this.ensureLoaded();
+      return this.metadata[sessionId];
+    } catch (error) {
+      console.error('Failed to get session metadata:', error);
+      return undefined;
     }
   }
 }
