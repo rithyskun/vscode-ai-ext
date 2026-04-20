@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src https:;">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <style>
   :root {
@@ -35,162 +35,336 @@
     --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
   }
 
+  html.light-theme {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --fg: #1a1a1a;
+    --muted: #666666;
+    --input-bg: #f0f0f0;
+    --input-fg: #1a1a1a;
+    --input-border: #ddd;
+    --border: #e0e0e0;
+    --border-hover: #d0d0d0;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-subtle: rgba(99, 102, 241, 0.1);
+    --user-msg-bg: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    --tool-bg: rgba(99, 102, 241, 0.08);
+    --code-bg: #f5f5f5;
+    --code-border: #ddd;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    line-height: 1.7;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    overflow: hidden;
   }
 
   #header {
-    padding: 16px 20px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
     background: var(--bg-secondary);
+    flex-wrap: wrap;
+    gap: 8px;
+    position: relative;
   }
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    order: 1;
   }
 
   .header-icon {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     color: white;
     font-weight: 700;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.4);
+    flex-shrink: 0;
   }
 
   #header h1 {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--fg);
-    letter-spacing: -0.5px;
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
+    order: 2;
   }
 
-  .provider-select {
-    background: var(--input-bg);
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--border-hover);
     color: var(--fg);
-    border: 1px solid var(--input-border);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-    font-size: 13px;
-    font-family: inherit;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     cursor: pointer;
-    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:active {
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+  }
+
+  .icon-btn:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .hamburger {
+    display: flex;
+    background: transparent;
+    border: 1px solid var(--border-hover);
+    color: var(--fg);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
     transition: all 0.2s ease;
   }
 
-  .provider-select:hover {
+  .hamburger span {
+    width: 14px;
+    height: 1.5px;
+    background: var(--fg);
+    transition: all 0.2s ease;
+  }
+
+  .hamburger:active {
     border-color: var(--accent);
     background: var(--accent-subtle);
   }
 
-  .provider-select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
   }
 
-  .provider-select option {
-    background: var(--bg-secondary);
-    color: var(--fg);
+  .status-indicator.connected {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
   }
 
-  .model-select {
-    background: var(--input-bg);
-    color: var(--fg);
-    border: 1px solid var(--input-border);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    outline: none;
-    transition: all 0.2s ease;
-    min-width: 180px;
+  .status-indicator.disconnected {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+    animation: none;
   }
 
-  .model-select:hover {
-    border-color: var(--accent);
-    background: var(--accent-subtle);
+  .status-indicator.checking {
+    background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
   }
 
-  .model-select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
   }
 
-  .model-select option {
-    background: var(--bg-secondary);
-    color: var(--fg);
-  }
-
-  #mode-badge {
-    font-size: 11px;
-    padding: 6px 12px;
-    border-radius: 20px;
+  .mode-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 12px;
     background: var(--accent-subtle);
     color: var(--accent);
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    flex-shrink: 0;
+  }
+
+  .header-menu {
+    display: none;
+    position: absolute;
+    top: 45px;
+    right: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    z-index: 100;
+    min-width: 160px;
+    box-shadow: var(--shadow);
+  }
+
+  .header-menu.open {
+    display: flex;
+  }
+
+  .menu-select {
+    background: var(--input-bg);
+    color: var(--fg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .menu-select:active {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
+
+  .shortcuts-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: flex-end;
+    animation: slideUp 0.3s ease;
+  }
+
+  .shortcuts-modal.open {
+    display: flex;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .shortcuts-content {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 12px;
+    max-width: 100%;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .shortcuts-content h2 {
+    font-size: 13px;
+    margin-bottom: 12px;
+    color: var(--fg);
+    font-weight: 700;
+  }
+
+  .shortcuts-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .shortcut-item:last-child {
+    border-bottom: none;
+  }
+
+  .shortcut-desc {
+    flex: 1;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .shortcut-key {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    white-space: nowrap;
+    margin-left: 8px;
   }
 
   #messages {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .message {
     display: flex;
-    gap: 16px;
+    gap: 8px;
     max-width: 100%;
-    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeIn 0.3s ease;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   .avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
     box-shadow: var(--shadow-sm);
   }
@@ -223,19 +397,19 @@
   }
 
   .message-bubble {
-    padding: 16px 18px;
-    border-radius: var(--radius);
+    padding: 10px 12px;
+    border-radius: 12px;
     max-width: 100%;
     word-break: break-word;
-    line-height: 1.8;
+    line-height: 1.5;
+    font-size: 13px;
   }
 
   .message.user .message-bubble {
     background: var(--user-msg-bg);
     color: var(--user-msg-fg);
-    border-radius: 24px 24px 8px 24px;
-    box-shadow: var(--shadow);
-    max-width: 85%;
+    border-radius: 16px 16px 4px 16px;
+    box-shadow: var(--shadow-sm);
   }
 
   .message.assistant .message-bubble {
@@ -248,67 +422,67 @@
   .message.tool .message-bubble {
     background: var(--tool-bg);
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 12px;
     border: 1px solid rgba(139, 92, 246, 0.2);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
+    border-radius: 8px;
+    padding: 10px 12px;
   }
 
   .message.error .message-bubble {
     border: 1px solid rgba(239, 68, 68, 0.3);
     background: rgba(239, 68, 68, 0.1);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     color: #fca5a5;
   }
 
   .tool-header {
-    font-size: 11px;
+    font-size: 10px;
     opacity: 0.8;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     font-weight: 700;
     color: var(--accent);
   }
 
   pre {
     background: var(--code-bg);
-    border-radius: var(--radius-sm);
-    padding: 16px;
+    border-radius: 6px;
+    padding: 10px;
     overflow-x: auto;
     font-family: var(--font-mono);
-    font-size: 13px;
-    margin: 12px 0;
+    font-size: 11px;
+    margin: 6px 0;
     white-space: pre-wrap;
     border: 1px solid var(--code-border);
-    position: relative;
-    line-height: 1.6;
+    line-height: 1.4;
+    -webkit-overflow-scrolling: touch;
   }
 
   code {
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 11px;
     background: var(--code-bg);
-    padding: 3px 8px;
-    border-radius: 6px;
+    padding: 2px 4px;
+    border-radius: 4px;
     border: 1px solid var(--code-border);
   }
 
   p {
-    line-height: 1.8;
-    margin: 10px 0;
+    line-height: 1.6;
+    margin: 6px 0;
   }
 
   .typing {
     display: inline-flex;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
-    padding: 12px 0;
+    padding: 8px 0;
   }
 
   .typing span {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--accent);
     border-radius: 50%;
     opacity: 0.6;
@@ -320,22 +494,24 @@
 
   @keyframes blink {
     0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
-    40% { opacity: 1; transform: scale(1.3); }
+    40% { opacity: 1; transform: scale(1.2); }
   }
 
   #input-container {
-    padding: 16px 20px;
+    padding: 10px 12px;
     border-top: 1px solid var(--border);
     flex-shrink: 0;
     background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   #agent-toggle {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    font-size: 13px;
+    gap: 8px;
+    font-size: 12px;
     color: var(--muted);
   }
 
@@ -347,14 +523,14 @@
 
   input[type=checkbox] {
     accent-color: var(--accent);
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
   }
 
   #input-row {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: flex-end;
   }
 
@@ -363,21 +539,22 @@
     background: var(--input-bg);
     color: var(--input-fg);
     border: 1px solid var(--input-border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    font-size: 15px;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
     font-family: inherit;
     resize: none;
-    min-height: 48px;
-    max-height: 180px;
+    min-height: 36px;
+    max-height: 100px;
     outline: none;
-    line-height: 1.6;
+    line-height: 1.4;
     transition: all 0.2s ease;
+    -webkit-appearance: none;
   }
 
   #prompt:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
   }
 
   #prompt::placeholder {
@@ -388,63 +565,77 @@
     background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
     color: var(--accent-fg);
     border: none;
-    border-radius: var(--radius);
-    padding: 14px 20px;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
     cursor: pointer;
-    font-size: 15px;
     font-weight: 600;
-    white-space: nowrap;
-    flex-shrink: 0;
     transition: all 0.2s ease;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-  }
-
-  #send-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   #send-btn:active:not(:disabled) {
-    transform: translateY(0);
+    transform: scale(0.95);
   }
 
   #send-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    transform: none;
   }
 
   #send-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
-  ::-webkit-scrollbar {
-    width: 8px;
+  .loading-info {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
   }
 
-  ::-webkit-scrollbar-track {
-    background: transparent;
+  .loading-info.show {
+    display: flex;
   }
 
-  ::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.3);
+  .wait-time {
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .cancel-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 2px 8px;
     border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    white-space: nowrap;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.5);
+  .cancel-btn:active {
+    background: rgba(239, 68, 68, 0.25);
   }
 
   .message-actions {
     display: none;
     flex-direction: row;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 6px;
+    margin-top: 6px;
     opacity: 0;
     animation: fadeIn 0.2s ease;
   }
 
+  .message:active .message-actions,
   .message:hover .message-actions {
     display: flex;
   }
@@ -453,23 +644,18 @@
     background: rgba(139, 92, 246, 0.15);
     border: 1px solid rgba(139, 92, 246, 0.3);
     color: var(--accent);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
     white-space: nowrap;
   }
 
-  .action-btn:hover {
+  .action-btn:active {
     background: rgba(139, 92, 246, 0.25);
     border-color: var(--accent);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
-  }
-
-  .action-btn:active {
-    transform: scale(0.95);
   }
 
   .action-btn.copied {
@@ -482,30 +668,30 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 16px;
+    padding: 6px 8px;
     background: rgba(139, 92, 246, 0.1);
     border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-    font-size: 12px;
+    font-size: 10px;
     color: var(--muted);
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    border-radius: 6px 6px 0 0;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
   }
 
   .code-copy-btn {
     background: rgba(139, 92, 246, 0.2);
     border: none;
     color: var(--accent);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
   }
 
-  .code-copy-btn:hover {
+  .code-copy-btn:active {
     background: rgba(139, 92, 246, 0.35);
   }
 
@@ -514,20 +700,353 @@
     color: #86efac;
   }
 
-  pre {
-    margin: 0;
-    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  }
-
-  pre code {
-    border: none;
-    padding: 0;
-    background: transparent;
-  }
-
   .hljs {
     background: var(--code-bg) !important;
     padding: 0 !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(139, 92, 246, 0.5);
+  }
+
+  @media (min-width: 768px) {
+    body {
+      font-size: 15px;
+    }
+
+    #header {
+      padding: 14px 18px;
+      gap: 12px;
+      flex-wrap: nowrap;
+    }
+
+    .header-left {
+      order: 1;
+    }
+
+    .header-right {
+      order: 2;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .provider-select,
+    .model-select {
+      display: inline-block;
+      background: var(--input-bg);
+      color: var(--fg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .provider-select:focus,
+    .model-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+    }
+
+    .provider-select option,
+    .model-select option {
+      background: var(--bg-secondary);
+      color: var(--fg);
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    .hamburger {
+      display: none;
+    }
+
+    .mode-badge {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+    }
+
+    #messages {
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .message {
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 11px;
+    }
+
+    .message-bubble {
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .message.user .message-bubble {
+      max-width: 80%;
+    }
+
+    pre {
+      padding: 12px;
+      font-size: 12px;
+      margin: 8px 0;
+    }
+
+    code {
+      font-size: 12px;
+      padding: 3px 6px;
+    }
+
+    .code-header {
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+
+    .code-copy-btn {
+      font-size: 10px;
+      padding: 3px 8px;
+    }
+
+    #input-container {
+      padding: 14px 18px;
+      gap: 10px;
+    }
+
+    #agent-toggle {
+      font-size: 13px;
+    }
+
+    #prompt {
+      min-height: 40px;
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    #send-btn {
+      width: 40px;
+      height: 40px;
+    }
+
+    #send-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .shortcuts-content {
+      max-width: 500px;
+      max-height: 80vh;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .shortcuts-content h2 {
+      font-size: 15px;
+    }
+
+    .shortcut-item {
+      padding: 8px 0;
+    }
+
+    .shortcut-desc {
+      font-size: 13px;
+    }
+
+    .shortcut-key {
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+
+    .shortcuts-modal {
+      justify-content: center;
+      align-items: center;
+    }
+
+    .action-btn {
+      font-size: 11px;
+      padding: 5px 10px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #header {
+      padding: 16px 20px;
+      gap: 14px;
+    }
+
+    .header-icon {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+
+    #header h1 {
+      font-size: 16px;
+    }
+
+    .header-controls {
+      gap: 10px;
+    }
+
+    .provider-select,
+    .model-select {
+      min-width: 140px;
+      font-size: 13px;
+      padding: 8px 12px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      font-size: 15px;
+    }
+
+    .mode-badge {
+      font-size: 11px;
+      padding: 6px 12px;
+    }
+
+    #messages {
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .message {
+      gap: 16px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      font-size: 12px;
+    }
+
+    .message-bubble {
+      padding: 14px 16px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .message.user .message-bubble {
+      max-width: 75%;
+    }
+
+    pre {
+      padding: 14px;
+      font-size: 13px;
+      margin: 10px 0;
+    }
+
+    code {
+      font-size: 13px;
+    }
+
+    .code-header {
+      padding: 10px 14px;
+      font-size: 12px;
+    }
+
+    .code-copy-btn {
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+
+    #input-container {
+      padding: 16px 20px;
+      gap: 12px;
+    }
+
+    #agent-toggle {
+      font-size: 14px;
+    }
+
+    #prompt {
+      min-height: 44px;
+      font-size: 15px;
+      padding: 12px 14px;
+    }
+
+    #send-btn {
+      width: 44px;
+      height: 44px;
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.3);
+    }
+
+    #send-btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    #send-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .shortcuts-content {
+      max-width: 550px;
+      padding: 24px;
+    }
+
+    .shortcuts-content h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .shortcut-item {
+      padding: 10px 0;
+    }
+
+    .action-btn {
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+  }
+
+  [aria-label] {
+    position: relative;
+  }
+
+  select:focus,
+  button:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 </style>
 </head>
@@ -539,32 +1058,76 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+
 <div id="header">
   <div class="header-left">
     <div class="header-icon">AI</div>
     <h1>AI Assistant</h1>
   </div>
   <div class="header-right">
-    <select id="provider-select" class="provider-select">
+    <div class="header-controls">
+      <select id="provider-select" class="provider-select" aria-label="Select AI provider">
+        <option value="anthropic">Anthropic</option>
+        <option value="ollama">Ollama</option>
+        <option value="openrouter">OpenRouter</option>
+      </select>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span class="status-indicator connected" id="provider-status" aria-label="Provider status"></span>
+      </div>
+      <select id="model-select" class="model-select" aria-label="Select model">
+        <option value="">Model</option>
+      </select>
+      <span class="mode-badge" id="mode-badge" aria-label="Current mode">chat</span>
+    </div>
+    <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" title="T">🌙</button>
+    <button class="icon-btn" id="shortcuts-btn" aria-label="Shortcuts" title="?">?</button>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <div class="header-menu" id="header-menu">
+    <select id="mobile-provider-select" class="menu-select" aria-label="Select provider">
       <option value="anthropic">Anthropic</option>
       <option value="ollama">Ollama</option>
       <option value="openrouter">OpenRouter</option>
     </select>
-    <select id="model-select" class="model-select">
+    <select id="mobile-model-select" class="menu-select" aria-label="Select model">
       <option value="">Default Model</option>
     </select>
-    <span id="mode-badge">chat</span>
   </div>
 </div>
+
+<div class="shortcuts-modal" id="shortcuts-modal" role="dialog" aria-labelledby="shortcuts-title">
+  <div class="shortcuts-content">
+    <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+    <div class="shortcuts-list">
+      <div class="shortcut-item"><span class="shortcut-desc">Send</span><span class="shortcut-key">Enter</span></div>
+      <div class="shortcut-item"><span class="shortcut-desc">New line</span><span class="shortcut-key">Shift+Enter</span></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Focus input</span><span class="shortcut-key">Ctrl+K</span></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Agent mode</span><span class="shortcut-key">Ctrl+Shift+A</span></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Toggle theme</span><span class="shortcut-key">T</span></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Show shortcuts</span><span class="shortcut-key">?</span></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Close modal</span><span class="shortcut-key">Esc</span></div>
+    </div>
+  </div>
+</div>
+
 <div id="messages"></div>
+
 <div id="input-container">
   <div id="agent-toggle">
-    <input type="checkbox" id="agent-cb">
+    <input type="checkbox" id="agent-cb" aria-label="Agent mode">
     <label for="agent-cb">Agent mode</label>
   </div>
+  <div id="loading-info" class="loading-info">
+    <span>Waiting <span class="wait-time" id="wait-time">0s</span></span>
+    <button class="cancel-btn" id="cancel-btn" aria-label="Cancel">Cancel</button>
+  </div>
   <div id="input-row">
-    <textarea id="prompt" rows="1" placeholder="Ask anything about your code…"></textarea>
-    <button id="send-btn">
+    <textarea id="prompt" rows="1" placeholder="Ask anything…" aria-label="Message"></textarea>
+    <button id="send-btn" aria-label="Send">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="22" y1="2" x2="11" y2="13"></line>
         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -575,21 +1138,66 @@
 
 <script>
 const vscode = acquireVsCodeApi();
-const state  = vscode.getState() || { history: [], agentMode: false, selectedProvider: 'ollama', selectedModel: '' };
+const state = vscode.getState() || { history: [], agentMode: false, selectedProvider: 'ollama', selectedModel: '', theme: 'dark' };
 
-const messagesEl    = document.getElementById('messages');
-const promptEl      = document.getElementById('prompt');
-const sendBtn       = document.getElementById('send-btn');
-const agentCb       = document.getElementById('agent-cb');
-const modeBadge     = document.getElementById('mode-badge');
+const messagesEl = document.getElementById('messages');
+const promptEl = document.getElementById('prompt');
+const sendBtn = document.getElementById('send-btn');
+const agentCb = document.getElementById('agent-cb');
+const modeBadge = document.getElementById('mode-badge');
 const providerSelect = document.getElementById('provider-select');
-const modelSelect   = document.getElementById('model-select');
+const modelSelect = document.getElementById('model-select');
+const mobileProviderSelect = document.getElementById('mobile-provider-select');
+const mobileModelSelect = document.getElementById('mobile-model-select');
+const themeToggle = document.getElementById('theme-toggle');
+const shortcutsBtn = document.getElementById('shortcuts-btn');
+const shortcutsModal = document.getElementById('shortcuts-modal');
+const loadingInfo = document.getElementById('loading-info');
+const waitTimeEl = document.getElementById('wait-time');
+const cancelBtn = document.getElementById('cancel-btn');
+const hamburger = document.getElementById('hamburger');
+const headerMenu = document.getElementById('header-menu');
+
+let loadingStartTime = null;
+let loadingInterval = null;
 
 agentCb.checked = state.agentMode;
 providerSelect.value = state.selectedProvider;
+mobileProviderSelect.value = state.selectedProvider;
 modelSelect.value = state.selectedModel;
+mobileModelSelect.value = state.selectedModel;
+applyTheme(state.theme);
 updateBadge();
 updateModelOptions();
+
+const syncProvider = (sel) => {
+  sel.addEventListener('change', () => {
+    state.selectedProvider = sel.value;
+    state.selectedModel = '';
+    providerSelect.value = state.selectedProvider;
+    mobileProviderSelect.value = state.selectedProvider;
+    modelSelect.value = '';
+    mobileModelSelect.value = '';
+    vscode.setState(state);
+    vscode.postMessage({ type: 'changeProvider', provider: sel.value });
+    updateModelOptions();
+  });
+};
+
+const syncModel = (sel) => {
+  sel.addEventListener('change', () => {
+    state.selectedModel = sel.value;
+    modelSelect.value = sel.value;
+    mobileModelSelect.value = sel.value;
+    vscode.setState(state);
+    vscode.postMessage({ type: 'changeModel', model: sel.value });
+  });
+};
+
+syncProvider(providerSelect);
+syncProvider(mobileProviderSelect);
+syncModel(modelSelect);
+syncModel(mobileModelSelect);
 
 agentCb.addEventListener('change', () => {
   state.agentMode = agentCb.checked;
@@ -597,20 +1205,36 @@ agentCb.addEventListener('change', () => {
   updateBadge();
 });
 
-providerSelect.addEventListener('change', () => {
-  state.selectedProvider = providerSelect.value;
-  state.selectedModel = '';
-  modelSelect.value = '';
+themeToggle.addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
   vscode.setState(state);
-  vscode.postMessage({ type: 'changeProvider', provider: providerSelect.value });
-  updateModelOptions();
+  applyTheme(state.theme);
 });
 
-modelSelect.addEventListener('change', () => {
-  state.selectedModel = modelSelect.value;
-  vscode.setState(state);
-  vscode.postMessage({ type: 'changeModel', model: modelSelect.value });
+shortcutsBtn.addEventListener('click', () => shortcutsModal.classList.toggle('open'));
+hamburger.addEventListener('click', () => headerMenu.classList.toggle('open'));
+
+shortcutsModal.addEventListener('click', (e) => {
+  if (e.target === shortcutsModal) shortcutsModal.classList.remove('open');
 });
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === '?') { e.preventDefault(); shortcutsModal.classList.toggle('open'); }
+  if ((e.key === 't' || e.key === 'T') && document.activeElement !== promptEl && !e.ctrlKey && !e.metaKey) { e.preventDefault(); themeToggle.click(); }
+  if (e.key === 'Escape') { shortcutsModal.classList.remove('open'); headerMenu.classList.remove('open'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); promptEl.focus(); }
+});
+
+cancelBtn.addEventListener('click', () => { vscode.postMessage({ type: 'cancel' }); setLoading(false); });
+
+promptEl.addEventListener('input', () => { promptEl.style.height = 'auto'; promptEl.style.height = Math.min(promptEl.scrollHeight, 100) + 'px'; });
+promptEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+sendBtn.addEventListener('click', sendMessage);
+
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('light-theme', theme === 'light');
+  themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+}
 
 function updateBadge() {
   modeBadge.textContent = state.agentMode ? 'agent' : 'chat';
@@ -618,61 +1242,12 @@ function updateBadge() {
 
 function updateModelOptions() {
   const provider = providerSelect.value;
-  modelSelect.innerHTML = '<option value="">Default Model</option>';
-
-  if (provider === 'openrouter') {
-    const freeModels = [
-      'google/gemma-2-9b-it:free',
-      'meta-llama/llama-3.2-3b-instruct:free',
-      'meta-llama/llama-3.2-1b-instruct:free',
-      'qwen/qwen-2.5-7b-instruct:free',
-      'mistralai/mistral-7b-instruct:free',
-      'microsoft/phi-3-mini-128k-instruct:free',
-      'cognitivecomputations/dolphin-mixtral-8x7b:free'
-    ];
-    freeModels.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model;
-      option.textContent = model.replace(':free', '');
-      modelSelect.appendChild(option);
-    });
-  } else if (provider === 'ollama') {
-    const ollamaModels = [
-      'qwen2.5-coder:7b',
-      'qwen2.5-coder:1.5b',
-      'llama3.2',
-      'mistral'
-    ];
-    ollamaModels.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model;
-      option.textContent = model;
-      modelSelect.appendChild(option);
-    });
-  } else if (provider === 'anthropic') {
-    const anthropicModels = [
-      'claude-haiku-4-5-20251001',
-      'claude-3-5-sonnet-20241022'
-    ];
-    anthropicModels.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model;
-      option.textContent = model;
-      modelSelect.appendChild(option);
-    });
-  }
+  [modelSelect, mobileModelSelect].forEach(sel => {
+    sel.innerHTML = '<option value="">Model</option>';
+    const models = provider === 'openrouter' ? ['google/gemma-2-9b-it:free', 'meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen-2.5-7b-instruct:free', 'mistralai/mistral-7b-instruct:free'] : provider === 'ollama' ? ['qwen2.5-coder:7b', 'llama3.2', 'mistral'] : ['claude-haiku-4-5-20251001', 'claude-3-5-sonnet-20241022'];
+    models.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m.split('/').pop().replace(':free', ''); sel.appendChild(opt); });
+  });
 }
-
-// Auto-resize textarea
-promptEl.addEventListener('input', () => {
-  promptEl.style.height = 'auto';
-  promptEl.style.height = Math.min(promptEl.scrollHeight, 160) + 'px';
-});
-
-promptEl.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-});
-sendBtn.addEventListener('click', sendMessage);
 
 function sendMessage() {
   const text = promptEl.value.trim();
@@ -681,6 +1256,7 @@ function sendMessage() {
   promptEl.style.height = 'auto';
   appendMessage('user', escapeHtml(text));
   setLoading(true);
+  headerMenu.classList.remove('open');
   vscode.postMessage({ type: 'chat', text, agentMode: state.agentMode, history: state.history });
 }
 
@@ -703,35 +1279,23 @@ function appendMessage(role, html, cssClass = '', originalText = '') {
 
   contentDiv.appendChild(bubbleDiv);
 
-  // Add action buttons for assistant messages
   if (role === 'assistant' && !cssClass.includes('tool')) {
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'message-actions';
-    
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'action-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.onclick = () => copyMessage(copyBtn);
-    
-    const retryBtn = document.createElement('button');
-    retryBtn.className = 'action-btn';
-    retryBtn.textContent = 'Retry';
-    retryBtn.onclick = () => retryMessage(retryBtn, originalText, state.agentMode);
-    
-    const regenBtn = document.createElement('button');
-    regenBtn.className = 'action-btn';
-    regenBtn.textContent = 'Regenerate';
-    regenBtn.onclick = () => regenerateMessage(regenBtn, state.agentMode);
-    
-    actionsDiv.appendChild(copyBtn);
-    actionsDiv.appendChild(retryBtn);
-    actionsDiv.appendChild(regenBtn);
+    ['Copy', 'Retry', 'Regenerate'].forEach((text, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.textContent = text;
+      if (text === 'Copy') btn.onclick = () => copyMessage(btn);
+      else if (text === 'Retry') btn.onclick = () => retryMessage(btn, originalText, state.agentMode);
+      else btn.onclick = () => regenerateMessage(btn, state.agentMode);
+      actionsDiv.appendChild(btn);
+    });
     contentDiv.appendChild(actionsDiv);
   }
 
   messageDiv.appendChild(avatarDiv);
   messageDiv.appendChild(contentDiv);
-
   messagesEl.appendChild(messageDiv);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return bubbleDiv;
@@ -739,32 +1303,26 @@ function appendMessage(role, html, cssClass = '', originalText = '') {
 
 function setLoading(on) {
   sendBtn.disabled = on;
+  loadingInfo.classList.toggle('show', on);
   if (on) {
+    loadingStartTime = Date.now();
+    loadingInterval = setInterval(() => {
+      waitTimeEl.textContent = Math.floor((Date.now() - loadingStartTime) / 1000) + 's';
+    }, 1000);
     currentAssistantEl = appendMessage('assistant', '<div class="typing"><span></span><span></span><span></span></div>');
+  } else {
+    clearInterval(loadingInterval);
   }
 }
 
 function renderMarkdown(text) {
-  // Code blocks with syntax highlighting
-  let result = text
-    .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-      const trimmedCode = code.trim();
-      let highlighted = trimmedCode;
-      if (lang && hljs.getLanguage(lang)) {
-        highlighted = hljs.highlight(trimmedCode, { language: lang }).value;
-      } else {
-        highlighted = hljs.highlightAuto(trimmedCode).value;
-      }
-      const displayLang = lang || 'code';
-      return `<div class="code-header"><span>${escapeHtml(displayLang)}</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
-    })
-    .replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`)
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n\n+/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    .replace(/^(.+)$/, '<p>$1</p>');
-
-  return result;
+  return text.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
+    const trimmed = code.trim();
+    let hl = trimmed;
+    if (lang && hljs.getLanguage(lang)) hl = hljs.highlight(trimmed, { language: lang }).value;
+    else hl = hljs.highlightAuto(trimmed).value;
+    return `<div class="code-header"><span>${escapeHtml(lang || 'code')}</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="hljs">${hl}</code></pre>`;
+  }).replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>').replace(/^(.+)$/gm, '<p>$1</p>');
 }
 
 function escapeHtml(s) {
@@ -772,30 +1330,20 @@ function escapeHtml(s) {
 }
 
 function copyCode(btn) {
-  const pre = btn.closest('.code-header').nextElementSibling;
-  const code = pre.querySelector('code').textContent;
-  navigator.clipboard.writeText(code).then(() => {
+  navigator.clipboard.writeText(btn.closest('.code-header').nextElementSibling.querySelector('code').textContent).then(() => {
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.classList.remove('copied');
-    }, 2000);
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
   });
 }
 
 function copyMessage(btn) {
-  const bubble = btn.closest('.message-bubble');
-  const text = bubble.textContent;
-  navigator.clipboard.writeText(text).then(() => {
+  navigator.clipboard.writeText(btn.closest('.message-bubble').textContent).then(() => {
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.classList.remove('copied');
-    }, 2000);
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
   });
 }
 
@@ -812,48 +1360,26 @@ function regenerateMessage(btn, agentMode) {
   vscode.postMessage({ type: 'chat', text: lastUserMsg.content, agentMode, history: state.history.slice(0, -2) });
 }
 
-window.addEventListener('message', event => {
+window.addEventListener('message', (event) => {
   const msg = event.data;
-
   switch (msg.type) {
     case 'stream_chunk':
-      if (currentAssistantEl) {
-        currentAssistantEl.innerHTML = renderMarkdown(msg.accumulated);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-      }
+      if (currentAssistantEl) { currentAssistantEl.innerHTML = renderMarkdown(msg.accumulated); messagesEl.scrollTop = messagesEl.scrollHeight; }
       break;
-
     case 'stream_done':
       setLoading(false);
       state.history = msg.history;
-      state.lastStreamText = msg.history[msg.history.length - 1]?.content || '';
       vscode.setState(state);
       currentAssistantEl = null;
       break;
-
     case 'agent_update':
       handleAgentUpdate(msg.update);
       break;
-
-    case 'providerChanged':
-      appendMessage('assistant', `Provider changed to <strong>${escapeHtml(msg.provider)}</strong>`);
-      break;
-
-    case 'modelChanged':
-      if (msg.model === 'default') {
-        appendMessage('assistant', `Model reset to default`);
-      } else {
-        appendMessage('assistant', `Model changed to <strong>${escapeHtml(msg.model)}</strong>`);
-      }
-      break;
-
     case 'error':
-      if (currentAssistantEl) {
-        currentAssistantEl.closest('.message').remove();
-      }
+      if (currentAssistantEl) currentAssistantEl.closest('.message').remove();
       currentAssistantEl = null;
       setLoading(false);
-      appendMessage('assistant', `<span style="color:var(--vscode-errorForeground)">⚠ ${escapeHtml(msg.message)}</span>`, 'error');
+      appendMessage('assistant', `<span style="color:#fca5a5">⚠ ${escapeHtml(msg.message)}</span>`, 'error');
       break;
   }
 });
@@ -861,22 +1387,15 @@ window.addEventListener('message', event => {
 function handleAgentUpdate(update) {
   switch (update.type) {
     case 'text':
-      if (currentAssistantEl) {
-        currentAssistantEl.innerHTML = renderMarkdown(update.content);
-      } else {
-        currentAssistantEl = appendMessage('assistant', renderMarkdown(update.content));
-      }
+      if (currentAssistantEl) currentAssistantEl.innerHTML = renderMarkdown(update.content);
+      else currentAssistantEl = appendMessage('assistant', renderMarkdown(update.content));
       break;
     case 'tool_call':
       currentAssistantEl = null;
-      appendMessage('assistant',
-        `<div class="tool-header">🔧 Tool call</div><strong>${escapeHtml(update.name)}</strong><pre>${escapeHtml(JSON.stringify(update.args, null, 2))}</pre>`,
-        'tool');
+      appendMessage('assistant', `<div class="tool-header">🔧 Call</div><strong>${escapeHtml(update.name)}</strong><pre>${escapeHtml(JSON.stringify(update.args, null, 2))}</pre>`, 'tool');
       break;
     case 'tool_result':
-      appendMessage('assistant',
-        `<div class="tool-header">✅ Result: ${escapeHtml(update.name)}</div><pre>${escapeHtml(update.result)}</pre>`,
-        'tool');
+      appendMessage('assistant', `<div class="tool-header">✅ ${escapeHtml(update.name)}</div><pre>${escapeHtml(update.result)}</pre>`, 'tool');
       break;
     case 'done':
       setLoading(false);
@@ -884,7 +1403,7 @@ function handleAgentUpdate(update) {
       break;
     case 'error':
       setLoading(false);
-      appendMessage('assistant', `<span style="color:var(--vscode-errorForeground)">⚠ ${escapeHtml(update.message)}</span>`, 'error');
+      appendMessage('assistant', `<span style="color:#fca5a5">⚠ ${escapeHtml(update.message)}</span>`, 'error');
       break;
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
