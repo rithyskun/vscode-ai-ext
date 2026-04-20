@@ -2,12 +2,13 @@
 // src/core/AgentRunner.ts
 // Implements a ReAct (Reason + Act) loop:
 //   1. Send messages + tool schemas to the model
-//   2. If model returns tool calls → execute → append result → repeat
+//   2. If model returns tool calls → check permissions → execute → append result → repeat
 //   3. If model returns plain text with no tool calls → done
 // Maximum 10 iterations to prevent infinite loops.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runAgent = runAgent;
 const AgentTools_1 = require("../tools/AgentTools");
+const PermissionService_1 = require("./PermissionService");
 const MAX_ITERATIONS = 10;
 const AGENT_SYSTEM_PROMPT = `You are an AI coding agent with access to tools for reading/writing files,
 running terminal commands, and listing directories. 
@@ -19,6 +20,7 @@ Guidelines:
 - After completing a task, summarise what you changed.`;
 async function* runAgent(provider, userMessage, history, onUpdate) {
     const toolDefs = Array.from(AgentTools_1.TOOL_REGISTRY.values()).map(t => t.definition);
+    const permissionService = PermissionService_1.PermissionService.getInstance();
     const messages = [
         ...history,
         { role: 'user', content: userMessage },
@@ -50,13 +52,24 @@ async function* runAgent(provider, userMessage, history, onUpdate) {
             let result;
             if (!tool) {
                 result = `Error: unknown tool "${tc.name}"`;
+                permissionService.recordPermissionHistory(tc.name, 'execute', false, 'Unknown tool');
             }
             else {
-                try {
-                    result = await tool.execute(tc.arguments);
+                // Check permission before executing
+                const permissionCheck = await permissionService.checkPermission(tc.name, 'execute', JSON.stringify(tc.arguments));
+                if (!permissionCheck.allowed) {
+                    result = `Permission denied for tool "${tc.name}": ${permissionCheck.reason || 'Requires user approval'}`;
+                    permissionService.recordPermissionHistory(tc.name, 'execute', false, permissionCheck.reason);
                 }
-                catch (err) {
-                    result = `Error executing ${tc.name}: ${err?.message ?? String(err)}`;
+                else {
+                    try {
+                        result = await tool.execute(tc.arguments);
+                        permissionService.recordPermissionHistory(tc.name, 'execute', true);
+                    }
+                    catch (err) {
+                        result = `Error executing ${tc.name}: ${err?.message ?? String(err)}`;
+                        permissionService.recordPermissionHistory(tc.name, 'execute', false, err?.message);
+                    }
                 }
             }
             const resultUpdate = { type: 'tool_result', name: tc.name, result };

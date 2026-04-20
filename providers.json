@@ -1,5 +1,5 @@
 {
-  "defaultProvider": "ollama",
+  "defaultProvider": "lms",
   "providers": {
     "anthropic": {
       "apiKey": "",
@@ -9,7 +9,7 @@
     "ollama": {
       "baseUrl": "http://localhost:11434",
       "model": "qwen2.5-coder:7b",
-      "enabled": true
+      "enabled": false
     },
     "openrouter": {
       "apiKey": "",
@@ -24,6 +24,11 @@
         "microsoft/phi-3-mini-128k-instruct:free",
         "cognitivecomputations/dolphin-mixtral-8x7b:free"
       ]
+    },
+    "lms": {
+      "baseUrl": "http://localhost:1234",
+      "model": "google/gemma-4-e2b",
+      "enabled": true
     }
   }
 }

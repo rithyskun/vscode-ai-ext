@@ -1,12 +1,13 @@
 // src/core/AgentRunner.ts
 // Implements a ReAct (Reason + Act) loop:
 //   1. Send messages + tool schemas to the model
-//   2. If model returns tool calls → execute → append result → repeat
+//   2. If model returns tool calls → check permissions → execute → append result → repeat
 //   3. If model returns plain text with no tool calls → done
 // Maximum 10 iterations to prevent infinite loops.
 
 import { IModelProvider, ChatMessage, ToolDefinition } from '../providers/IModelProvider';
 import { TOOL_REGISTRY } from '../tools/AgentTools';
+import { PermissionService } from './PermissionService';
 
 const MAX_ITERATIONS = 10;
 
@@ -33,6 +34,7 @@ export async function* runAgent(
   onUpdate: (update: AgentUpdate) => void
 ): AsyncGenerator<AgentUpdate> {
   const toolDefs: ToolDefinition[] = Array.from(TOOL_REGISTRY.values()).map(t => t.definition);
+  const permissionService = PermissionService.getInstance();
 
   const messages: ChatMessage[] = [
     ...history,
@@ -72,11 +74,26 @@ export async function* runAgent(
 
       if (!tool) {
         result = `Error: unknown tool "${tc.name}"`;
+        permissionService.recordPermissionHistory(tc.name, 'execute', false, 'Unknown tool');
       } else {
-        try {
-          result = await tool.execute(tc.arguments);
-        } catch (err: any) {
-          result = `Error executing ${tc.name}: ${err?.message ?? String(err)}`;
+        // Check permission before executing
+        const permissionCheck = await permissionService.checkPermission(
+          tc.name,
+          'execute',
+          JSON.stringify(tc.arguments)
+        );
+
+        if (!permissionCheck.allowed) {
+          result = `Permission denied for tool "${tc.name}": ${permissionCheck.reason || 'Requires user approval'}`;
+          permissionService.recordPermissionHistory(tc.name, 'execute', false, permissionCheck.reason);
+        } else {
+          try {
+            result = await tool.execute(tc.arguments);
+            permissionService.recordPermissionHistory(tc.name, 'execute', true);
+          } catch (err: any) {
+            result = `Error executing ${tc.name}: ${err?.message ?? String(err)}`;
+            permissionService.recordPermissionHistory(tc.name, 'execute', false, err?.message);
+          }
         }
       }
 

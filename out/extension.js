@@ -40,14 +40,35 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const ChatPanel_1 = require("./views/ChatPanel");
+const ProviderConfigPanel_1 = require("./views/ProviderConfigPanel");
 const InlineCompletionProvider_1 = require("./completion/InlineCompletionProvider");
 const ModelRouter_1 = require("./core/ModelRouter");
+const LMSProvider_1 = require("./providers/LMSProvider");
+const ChatHistory_1 = require("./core/ChatHistory");
+const ProviderConfigService_1 = require("./core/ProviderConfigService");
+const PermissionService_1 = require("./core/PermissionService");
 function activate(context) {
     console.log('AI Assistant extension activated');
-    // ── Chat panel ────────────────────────────────────────────────────────────
+    // Set storage paths for services
+    const globalStoragePath = context.globalStorageUri.fsPath;
+    ChatHistory_1.ChatHistoryService.getInstance().setStoragePath(globalStoragePath);
+    ProviderConfigService_1.ProviderConfigService.getInstance().setStoragePath(globalStoragePath);
+    PermissionService_1.PermissionService.getInstance().setStoragePath(globalStoragePath);
+    // Initialize services
+    try {
+        ProviderConfigService_1.ProviderConfigService.getInstance().initialize();
+        PermissionService_1.PermissionService.getInstance().initialize();
+        console.log('Services initialized');
+    }
+    catch (error) {
+        console.error('Failed to initialize services:', error);
+        vscode.window.showWarningMessage(`Service initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    // Initialize UI components
     const chatProvider = new ChatPanel_1.ChatViewProvider(context.extensionUri);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(ChatPanel_1.ChatViewProvider.viewType, chatProvider));
-    // ── Inline completion ─────────────────────────────────────────────────────
+    const providerConfigProvider = new ProviderConfigPanel_1.ProviderConfigViewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(ProviderConfigPanel_1.ProviderConfigViewProvider.viewType, providerConfigProvider));
     const completionProvider = new InlineCompletionProvider_1.InlineCompletionProvider();
     context.subscriptions.push(vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, // All files
     completionProvider));
@@ -81,6 +102,21 @@ function activate(context) {
         setTimeout(() => {
             vscode.commands.executeCommand('aiAssistant.openChat');
         }, 300);
+    }), vscode.commands.registerCommand('aiAssistant.listModels', async () => {
+        try {
+            const provider = (0, ModelRouter_1.getProvider)();
+            if (provider instanceof LMSProvider_1.LMSProvider) {
+                const models = await provider.listModels();
+                const message = `Available LMS models:\n${models.map(m => `• ${m}`).join('\n')}`;
+                vscode.window.showInformationMessage(message, { modal: true });
+            }
+            else {
+                vscode.window.showInformationMessage('Model listing is only available for LMS provider');
+            }
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to list models: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }));
     // ── Status bar item ───────────────────────────────────────────────────────
     const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -94,9 +130,12 @@ function activate(context) {
     }
     updateStatusBar();
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
-        if (e.affectsConfiguration('aiAssistant'))
+        if (e.affectsConfiguration('aiAssistant.inlineCompletion')) {
             updateStatusBar();
+        }
     }));
 }
-function deactivate() { }
+function deactivate() {
+    console.log('AI Assistant extension deactivated');
+}
 //# sourceMappingURL=extension.js.map

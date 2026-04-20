@@ -1,7 +1,7 @@
 {
   "name": "vscode-ai-assistant",
   "displayName": "AI Assistant",
-  "description": "Free AI chat, agent, and inline completion — Anthropic, Ollama, OpenRouter",
+  "description": "Free AI chat, agent, and inline completion — Anthropic, Ollama, OpenRouter, LMS",
   "version": "0.1.0",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["AI", "Other"],
@@ -11,13 +11,17 @@
     "commands": [
       { "command": "aiAssistant.openChat",        "title": "AI: Open Chat" },
       { "command": "aiAssistant.runAgent",         "title": "AI: Run Agent on Selection" },
-      { "command": "aiAssistant.toggleCompletion", "title": "AI: Toggle Inline Completion" }
+      { "command": "aiAssistant.toggleCompletion", "title": "AI: Toggle Inline Completion" },
+      { "command": "aiAssistant.listModels",      "title": "AI: List Available Models" }
     ],
     "viewsContainers": {
       "activitybar": [{ "id": "aiAssistant", "title": "AI Assistant", "icon": "$(hubot)" }]
     },
     "views": {
-      "aiAssistant": [{ "type": "webview", "id": "aiAssistant.chatView", "name": "Chat" }]
+      "aiAssistant": [
+        { "type": "webview", "id": "aiAssistant.chatView", "name": "Chat" },
+        { "type": "webview", "id": "aiAssistant.providerConfigView", "name": "Provider Config" }
+      ]
     },
     "configuration": {
       "title": "AI Assistant",
@@ -34,9 +38,11 @@
   "scripts": {
     "vscode:prepublish": "npm run compile && npm run copy-config",
     "compile": "tsc -p ./",
-    "copy-config": "cp providers.json out/",
-    "watch": "tsc -watch -p ./ & npm run copy-config",
+    "copy-config": "copy providers.json out\\providers.json",
+    "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts"
+  },
+  "dependencies": {
   },
   "devDependencies": {
     "@types/node":   "^20.0.0",

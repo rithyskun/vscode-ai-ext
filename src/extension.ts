@@ -4,19 +4,44 @@
 
 import * as vscode from 'vscode';
 import { ChatViewProvider } from './views/ChatPanel';
+import { ProviderConfigViewProvider } from './views/ProviderConfigPanel';
 import { InlineCompletionProvider } from './completion/InlineCompletionProvider';
-import { getConfig } from './core/ModelRouter';
+import { getProvider, getConfig } from './core/ModelRouter';
+import { LMSProvider } from './providers/LMSProvider';
+import { ChatHistoryService } from './core/ChatHistory';
+import { ProviderConfigService } from './core/ProviderConfigService';
+import { PermissionService } from './core/PermissionService';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('AI Assistant extension activated');
 
-  // ── Chat panel ────────────────────────────────────────────────────────────
+  // Set storage paths for services
+  const globalStoragePath = context.globalStorageUri.fsPath;
+  ChatHistoryService.getInstance().setStoragePath(globalStoragePath);
+  ProviderConfigService.getInstance().setStoragePath(globalStoragePath);
+  PermissionService.getInstance().setStoragePath(globalStoragePath);
+
+  // Initialize services
+  try {
+    ProviderConfigService.getInstance().initialize();
+    PermissionService.getInstance().initialize();
+    console.log('Services initialized');
+  } catch (error) {
+    console.error('Failed to initialize services:', error);
+    vscode.window.showWarningMessage(`Service initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  // Initialize UI components
   const chatProvider = new ChatViewProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(ChatViewProvider.viewType, chatProvider)
   );
 
-  // ── Inline completion ─────────────────────────────────────────────────────
+  const providerConfigProvider = new ProviderConfigViewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(ProviderConfigViewProvider.viewType, providerConfigProvider)
+  );
+
   const completionProvider = new InlineCompletionProvider();
   context.subscriptions.push(
     vscode.languages.registerInlineCompletionItemProvider(
@@ -65,6 +90,21 @@ export function activate(context: vscode.ExtensionContext) {
       setTimeout(() => {
         vscode.commands.executeCommand('aiAssistant.openChat');
       }, 300);
+    }),
+
+    vscode.commands.registerCommand('aiAssistant.listModels', async () => {
+      try {
+        const provider = getProvider();
+        if (provider instanceof LMSProvider) {
+          const models = await provider.listModels();
+          const message = `Available LMS models:\n${models.map(m => `• ${m}`).join('\n')}`;
+          vscode.window.showInformationMessage(message, { modal: true });
+        } else {
+          vscode.window.showInformationMessage('Model listing is only available for LMS provider');
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to list models: ${error instanceof Error ? error.message : String(error)}`);
+      }
     })
   );
 
@@ -83,9 +123,13 @@ export function activate(context: vscode.ExtensionContext) {
   updateStatusBar();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration('aiAssistant')) updateStatusBar();
+      if (e.affectsConfiguration('aiAssistant.inlineCompletion')) {
+        updateStatusBar();
+      }
     })
   );
 }
 
-export function deactivate() {}
+export function deactivate() {
+  console.log('AI Assistant extension deactivated');
+}

@@ -81,8 +81,10 @@ function buildContext(history, userMessage, contextLines) {
         }
     }
     const systemPrompt = parts.join('\n');
+    // Limit history to most recent 10 messages to prevent context overflow
+    const recentHistory = history.slice(-10);
     const messages = [
-        ...history,
+        ...recentHistory,
         { role: 'user', content: userMessage },
     ];
     return { systemPrompt, messages };
