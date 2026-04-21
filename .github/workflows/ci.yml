@@ -2,113 +2,112 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Lint
-        run: npm run lint
-      
-      - name: Compile
-        run: npm run compile
-      
-      - name: Copy config
-        run: npm run copy-config
-      
-      - name: Verify output
-        run: |
-          test -f out/extension.js || exit 1
-          test -f out/providers.json || exit 1
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Compile
+      run: npm run compile
+
+    - name: Copy config
+      run: npm run copy-config
+
+    - name: Verify output
+      run: |
+        test -f out/extension.js || exit 1
+        test -f out/providers.json || exit 1
 
   docker-test:
     runs-on: ubuntu-latest
-    
+
     services:
       ollama:
         image: ollama/ollama:latest
         options: >-
-          --health-cmd="curl -f http://localhost:11434/api/tags || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd="curl -f http://localhost:11434/api/tags || exit 1" --health-interval=10s --health-timeout=5s --health-retries=5
         ports:
-          - 11434:11434
-    
+        - 11434:11434
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Verify Ollama service
-        run: |
-          curl -f http://localhost:11434/api/tags
-          echo "Ollama service is running"
-      
-      - name: Test Ollama connectivity
-        run: |
-          for i in {1..10}; do
-            if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
-              echo "✓ Ollama is ready"
-              exit 0
-            fi
-            echo "Attempt $i: Waiting for Ollama..."
-            sleep 2
-          done
-          echo "✗ Ollama failed to start"
-          exit 1
+    - uses: actions/checkout@v4
+
+    - name: Verify Ollama service
+      run: |
+        curl -f http://localhost:11434/api/tags
+        echo "Ollama service is running"
+
+    - name: Test Ollama connectivity
+      run: |
+        for i in {1..10}; do
+          if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+            echo "✓ Ollama is ready"
+            exit 0
+          fi
+          echo "Attempt $i: Waiting for Ollama..."
+          sleep 2
+        done
+        echo "✗ Ollama failed to start"
+        exit 1
 
   publish-extension:
-    needs: [build, docker-test]
+    needs: [ build, docker-test ]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build extension
-        run: |
-          npm run compile
-          npm run copy-config
-      
-      - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: vscode-extension
-          path: out/
-          retention-days: 30
-      
-      # Uncomment below to publish to Open VSX or VS Marketplace
-      # - name: Publish to Open VSX
-      #   run: |
-      #     npx ovsx publish vscode-ai-assistant-*.vsix \
-      #       -p ${{ secrets.OPEN_VSX_TOKEN }}
-      #   if: secrets.OPEN_VSX_TOKEN != ''
-      
-      # - name: Publish to VS Marketplace
-      #   run: |
-      #     npx vsce publish \
-      #       -p ${{ secrets.VS_MARKETPLACE_TOKEN }}
-      #   if: secrets.VS_MARKETPLACE_TOKEN != ''
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build extension
+      run: |
+        npm run compile
+        npm run copy-config
+
+    - name: Package VSIX
+      run: npx vsce package
+
+    - name: Upload VSIX artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: vscode-extension
+        path: "*.vsix"
+        retention-days: 30
+    # Uncomment below to publish to Open VSX or VS Marketplace
+    # - name: Publish to Open VSX
+    #   if: ${{ secrets.OPEN_VSX_TOKEN != '' }}
+    #   run: |
+    #     npx ovsx publish vscode-ai-assistant-*.vsix \
+    #       -p ${{ secrets.OPEN_VSX_TOKEN }}
+
+    # - name: Publish to VS Marketplace
+    #   if: ${{ secrets.VS_MARKETPLACE_TOKEN != '' }}
+    #   run: |
+    #     npx vsce publish \
+    #       -p ${{ secrets.VS_MARKETPLACE_TOKEN }}
