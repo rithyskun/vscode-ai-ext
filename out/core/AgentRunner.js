@@ -55,9 +55,14 @@ async function* runAgent(provider, userMessage, history, onUpdate) {
                 permissionService.recordPermissionHistory(tc.name, 'execute', false, 'Unknown tool');
             }
             else {
-                // Check permission before executing
+                // Check permission before executing. "ask" permissions are handled by tools
+                // that present explicit confirmation UI.
                 const permissionCheck = await permissionService.checkPermission(tc.name, 'execute', JSON.stringify(tc.arguments));
-                if (!permissionCheck.allowed) {
+                const deniedByPolicy = !permissionCheck.allowed &&
+                    (permissionCheck.reason?.includes('always deny') ?? false);
+                const blockedUnknownTool = !permissionCheck.allowed &&
+                    (permissionCheck.reason?.includes('Tool not found in permissions') ?? false);
+                if (deniedByPolicy || blockedUnknownTool) {
                     result = `Permission denied for tool "${tc.name}": ${permissionCheck.reason || 'Requires user approval'}`;
                     permissionService.recordPermissionHistory(tc.name, 'execute', false, permissionCheck.reason);
                 }
