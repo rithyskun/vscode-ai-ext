@@ -24,6 +24,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Initialize services
   try {
+    void ChatHistoryService.getInstance().initialize().catch(error => {
+      console.error('Failed to initialize MongoDB chat history:', error);
+      vscode.window.showWarningMessage(`Chat history initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+    });
     ProviderConfigService.getInstance().initialize();
     PermissionService.getInstance().initialize();
     console.log('Services initialized');
@@ -118,11 +122,11 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.executeCommand('aiAssistant.chatView.focus');
       // Post message to chat panel with new session
       if (chatProvider) {
-        chatProvider.switchSession(sessionId || 'default');
+        await chatProvider.switchSession(sessionId || 'default');
       }
       // Refresh history panel
       if (chatHistoryProvider) {
-        chatHistoryProvider.refresh();
+        await chatHistoryProvider.refresh();
       }
     }),
 
@@ -133,10 +137,10 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('aiAssistant.refreshHistory', () => {
+    vscode.commands.registerCommand('aiAssistant.refreshHistory', async () => {
       // Refresh the history panel when session name changes
       if (chatHistoryProvider) {
-        chatHistoryProvider.refresh();
+        await chatHistoryProvider.refresh();
       }
     })
   );

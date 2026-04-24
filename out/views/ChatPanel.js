@@ -58,7 +58,7 @@ class ChatViewProvider {
         };
         webviewView.webview.html = this.getHtml();
         // Load initial session history
-        this.loadSessionHistory();
+        void this.loadSessionHistory();
         webviewView.webview.onDidReceiveMessage(async (msg) => {
             if (msg.type === 'chat') {
                 await this.handleChat(msg.text, msg.agentMode, msg.history ?? []);
@@ -84,7 +84,7 @@ class ChatViewProvider {
             // Auto-generate session name from first message if this is a new session
             if ((this.currentSessionName === 'New Chat' || rawHistory.length === 0) && userMessage.trim()) {
                 const generatedName = this.generateSessionNameFromMessage(userMessage);
-                this.updateSessionName(generatedName);
+                await this.updateSessionName(generatedName);
             }
             // Save user message to history
             const historyService = ChatHistory_1.ChatHistoryService.getInstance();
@@ -237,15 +237,15 @@ class ChatViewProvider {
         }
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     }
-    switchSession(sessionId) {
+    async switchSession(sessionId) {
         console.log('[ChatPanel] Switching to session:', sessionId);
         this.currentSessionId = sessionId;
         // Get session metadata to get the name
         const historyService = ChatHistory_1.ChatHistoryService.getInstance();
-        const metadata = historyService.getSessionMetadata(sessionId);
+        const metadata = await historyService.getSessionMetadata(sessionId);
         this.currentSessionName = metadata?.name || 'Untitled Session';
         console.log('[ChatPanel] Session name:', this.currentSessionName);
-        this.loadSessionHistory();
+        await this.loadSessionHistory();
     }
     notifyThemeChange(theme) {
         if (!this.view)
@@ -255,14 +255,14 @@ class ChatViewProvider {
             theme
         });
     }
-    loadSessionHistory() {
+    async loadSessionHistory() {
         if (!this.view) {
             console.error('[ChatPanel] View not available');
             return;
         }
         try {
             const historyService = ChatHistory_1.ChatHistoryService.getInstance();
-            const history = historyService.loadHistory(this.currentSessionId);
+            const history = await historyService.loadHistory(this.currentSessionId);
             console.log('[ChatPanel] Loaded history with', history.length, 'messages for session', this.currentSessionId);
             const message = {
                 type: 'loadSession',
@@ -315,10 +315,10 @@ class ChatViewProvider {
         }
         return sessionName || 'Untitled Chat';
     }
-    updateSessionName(newName) {
+    async updateSessionName(newName) {
         console.log('[ChatPanel] Updating session name from', this.currentSessionName, 'to', newName);
         const historyService = ChatHistory_1.ChatHistoryService.getInstance();
-        historyService.renameSession(this.currentSessionId, newName);
+        await historyService.renameSession(this.currentSessionId, newName);
         this.currentSessionName = newName;
         // Notify history panel to refresh
         vscode.commands.executeCommand('aiAssistant.refreshHistory');
