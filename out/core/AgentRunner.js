@@ -10,6 +10,15 @@ exports.runAgent = runAgent;
 const AgentTools_1 = require("../tools/AgentTools");
 const PermissionService_1 = require("./PermissionService");
 const MAX_ITERATIONS = 10;
+// Tools in this set perform their own user confirmation UX when policy is "ask".
+const ASK_POLICY_SELF_CONFIRMING_TOOLS = new Set([
+    'write_file',
+    'run_terminal',
+    'edit_file',
+    'delete_file',
+    'create_directory',
+    'apply_code_block',
+]);
 const AGENT_SYSTEM_PROMPT = `You are an AI coding agent with access to tools for reading/writing files,
 running terminal commands, and listing directories. 
 
@@ -62,7 +71,10 @@ async function* runAgent(provider, userMessage, history, onUpdate) {
                     (permissionCheck.reason?.includes('always deny') ?? false);
                 const blockedUnknownTool = !permissionCheck.allowed &&
                     (permissionCheck.reason?.includes('Tool not found in permissions') ?? false);
-                if (deniedByPolicy || blockedUnknownTool) {
+                const isAskPolicy = !permissionCheck.allowed &&
+                    (permissionCheck.reason?.includes('ask user') ?? false);
+                const askPolicyHandledByTool = ASK_POLICY_SELF_CONFIRMING_TOOLS.has(tc.name);
+                if (deniedByPolicy || blockedUnknownTool || (isAskPolicy && !askPolicyHandledByTool)) {
                     result = `Permission denied for tool "${tc.name}": ${permissionCheck.reason || 'Requires user approval'}`;
                     permissionService.recordPermissionHistory(tc.name, 'execute', false, permissionCheck.reason);
                 }
