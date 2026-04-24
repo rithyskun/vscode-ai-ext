@@ -52,9 +52,12 @@
     ]
   },
   "scripts": {
+    "build": "npm run compile && npm run copy-config",
     "vscode:prepublish": "npm run compile && npm run copy-config",
+    "typecheck": "tsc -p ./ --noEmit",
+    "test": "node --test",
     "compile": "tsc -p ./",
-    "copy-config": "copy providers.json out\\providers.json",
+    "copy-config": "node -e \"require('fs').mkdirSync('out',{recursive:true});require('fs').copyFileSync('providers.json','out/providers.json')\"",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts"
   },
@@ -62,8 +65,11 @@
     "mongodb": "^6.16.0"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "@types/node":   "^20.0.0",
     "@types/vscode": "^1.85.0",
+    "eslint": "^9.39.1",
     "typescript":    "^5.3.0"
   }
 }
