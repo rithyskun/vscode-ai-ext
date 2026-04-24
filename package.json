@@ -55,9 +55,9 @@
     "build": "npm run compile && npm run copy-config",
     "vscode:prepublish": "npm run compile && npm run copy-config",
     "typecheck": "tsc -p ./ --noEmit",
-    "test": "npm run lint",
+    "test": "node --test",
     "compile": "tsc -p ./",
-    "copy-config": "copy providers.json out\\providers.json",
+    "copy-config": "node -e \"require('fs').mkdirSync('out',{recursive:true});require('fs').copyFileSync('providers.json','out/providers.json')\"",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts"
   },
