@@ -34,7 +34,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.getHtml();
 
     // Load initial session history
-    this.loadSessionHistory();
+    void this.loadSessionHistory();
 
     webviewView.webview.onDidReceiveMessage(async msg => {
       if (msg.type === 'chat') {
@@ -64,7 +64,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       // Auto-generate session name from first message if this is a new session
       if ((this.currentSessionName === 'New Chat' || rawHistory.length === 0) && userMessage.trim()) {
         const generatedName = this.generateSessionNameFromMessage(userMessage);
-        this.updateSessionName(generatedName);
+        await this.updateSessionName(generatedName);
       }
 
       // Save user message to history
@@ -241,17 +241,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   }
 
-  public switchSession(sessionId: string) {
+  public async switchSession(sessionId: string) {
     console.log('[ChatPanel] Switching to session:', sessionId);
     this.currentSessionId = sessionId;
     
     // Get session metadata to get the name
     const historyService = ChatHistoryService.getInstance();
-    const metadata = historyService.getSessionMetadata(sessionId);
+    const metadata = await historyService.getSessionMetadata(sessionId);
     this.currentSessionName = metadata?.name || 'Untitled Session';
     
     console.log('[ChatPanel] Session name:', this.currentSessionName);
-    this.loadSessionHistory();
+    await this.loadSessionHistory();
   }
 
   public notifyThemeChange(theme: string) {
@@ -263,7 +263,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private loadSessionHistory() {
+  private async loadSessionHistory() {
     if (!this.view) {
       console.error('[ChatPanel] View not available');
       return;
@@ -271,7 +271,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     try {
       const historyService = ChatHistoryService.getInstance();
-      const history = historyService.loadHistory(this.currentSessionId);
+      const history = await historyService.loadHistory(this.currentSessionId);
       
       console.log('[ChatPanel] Loaded history with', history.length, 'messages for session', this.currentSessionId);
       
@@ -331,11 +331,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     return sessionName || 'Untitled Chat';
   }
 
-  private updateSessionName(newName: string) {
+  private async updateSessionName(newName: string) {
     console.log('[ChatPanel] Updating session name from', this.currentSessionName, 'to', newName);
     
     const historyService = ChatHistoryService.getInstance();
-    historyService.renameSession(this.currentSessionId, newName);
+    await historyService.renameSession(this.currentSessionId, newName);
     this.currentSessionName = newName;
     
     // Notify history panel to refresh

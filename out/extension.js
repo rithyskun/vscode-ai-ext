@@ -57,6 +57,10 @@ function activate(context) {
     PermissionService_1.PermissionService.getInstance().setStoragePath(globalStoragePath);
     // Initialize services
     try {
+        void ChatHistory_1.ChatHistoryService.getInstance().initialize().catch(error => {
+            console.error('Failed to initialize MongoDB chat history:', error);
+            vscode.window.showWarningMessage(`Chat history initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+        });
         ProviderConfigService_1.ProviderConfigService.getInstance().initialize();
         PermissionService_1.PermissionService.getInstance().initialize();
         console.log('Services initialized');
@@ -125,21 +129,21 @@ function activate(context) {
         vscode.commands.executeCommand('aiAssistant.chatView.focus');
         // Post message to chat panel with new session
         if (chatProvider) {
-            chatProvider.switchSession(sessionId || 'default');
+            await chatProvider.switchSession(sessionId || 'default');
         }
         // Refresh history panel
         if (chatHistoryProvider) {
-            chatHistoryProvider.refresh();
+            await chatHistoryProvider.refresh();
         }
     }), vscode.commands.registerCommand('aiAssistant.applyTheme', async (theme) => {
         const appliedTheme = theme || vscode.workspace.getConfiguration('aiAssistant').get('theme', 'dark');
         if (chatProvider) {
             chatProvider.notifyThemeChange(appliedTheme);
         }
-    }), vscode.commands.registerCommand('aiAssistant.refreshHistory', () => {
+    }), vscode.commands.registerCommand('aiAssistant.refreshHistory', async () => {
         // Refresh the history panel when session name changes
         if (chatHistoryProvider) {
-            chatHistoryProvider.refresh();
+            await chatHistoryProvider.refresh();
         }
     }));
     // ── Status bar item ───────────────────────────────────────────────────────

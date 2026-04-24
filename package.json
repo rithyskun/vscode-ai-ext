@@ -29,7 +29,22 @@
       "properties": {
         "aiAssistant.agentMode":           { "type": "boolean", "default": true },
         "aiAssistant.inlineCompletion":    { "type": "boolean", "default": true },
-        "aiAssistant.contextLines":        { "type": "number",  "default": 50 }
+        "aiAssistant.contextLines":        { "type": "number",  "default": 50 },
+        "aiAssistant.mongoUri": {
+          "type": "string",
+          "default": "",
+          "description": "MongoDB connection URI used for chat history storage"
+        },
+        "aiAssistant.mongoDatabase": {
+          "type": "string",
+          "default": "vscode_ai_assistant",
+          "description": "MongoDB database name for chat history"
+        },
+        "aiAssistant.mongoCollection": {
+          "type": "string",
+          "default": "chat_sessions",
+          "description": "MongoDB collection name for chat sessions"
+        }
       }
     },
     "keybindings": [
@@ -44,6 +59,7 @@
     "lint": "eslint src --ext ts"
   },
   "dependencies": {
+    "mongodb": "^6.16.0"
   },
   "devDependencies": {
     "@types/node":   "^20.0.0",

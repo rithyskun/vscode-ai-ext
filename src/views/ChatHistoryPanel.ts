@@ -26,7 +26,7 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
     };
 
     webviewView.webview.html = this.getHtml();
-    this.refresh();
+    void this.refresh();
 
     webviewView.webview.onDidReceiveMessage(async msg => {
       if (msg.type === 'newSession') {
@@ -38,7 +38,7 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
       } else if (msg.type === 'renameSession') {
         await this.handleRenameSession(msg.sessionId, msg.newName);
       } else if (msg.type === 'refreshSessions') {
-        this.refresh();
+        await this.refresh();
       }
     });
   }
@@ -46,13 +46,13 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
   private async handleNewSession(name?: string) {
     try {
       const historyService = ChatHistoryService.getInstance();
-      const sessionId = historyService.createSession(name);
+      const sessionId = await historyService.createSession(name);
       this.currentSessionId = sessionId;
       
       // Notify the chat panel to switch to this session
       vscode.commands.executeCommand('aiAssistant.switchSession', sessionId);
       
-      this.refresh();
+      await this.refresh();
     } catch (error) {
       if (this.view) {
         this.view.webview.postMessage({
@@ -70,7 +70,7 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
       // Notify the chat panel to switch to this session
       console.log('[ChatHistoryPanel] Executing switchSession command');
       vscode.commands.executeCommand('aiAssistant.switchSession', sessionId);
-      this.refresh();
+      await this.refresh();
     } catch (error) {
       console.error('[ChatHistoryPanel] Error loading session:', error);
       if (this.view) {
@@ -104,7 +104,7 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
         vscode.commands.executeCommand('aiAssistant.switchSession', 'default');
       }
       
-      this.refresh();
+      await this.refresh();
     } catch (error) {
       if (this.view) {
         this.view.webview.postMessage({
@@ -118,8 +118,8 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
   private async handleRenameSession(sessionId: string, newName: string) {
     try {
       const historyService = ChatHistoryService.getInstance();
-      historyService.renameSession(sessionId, newName);
-      this.refresh();
+      await historyService.renameSession(sessionId, newName);
+      await this.refresh();
     } catch (error) {
       if (this.view) {
         this.view.webview.postMessage({
@@ -130,11 +130,11 @@ export class ChatHistoryViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  public refresh() {
+  public async refresh() {
     if (!this.view) return;
 
     const historyService = ChatHistoryService.getInstance();
-    const sessions = historyService.getSessionsWithMetadata();
+    const sessions = await historyService.getSessionsWithMetadata();
     
     this.view.webview.postMessage({
       type: 'sessionsList',

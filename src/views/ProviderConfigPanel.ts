@@ -268,7 +268,7 @@ export class ProviderConfigViewProvider implements vscode.WebviewViewProvider {
       );
       
       if (confirmed === 'Clear') {
-        const sessions = historyService.getAllSessions();
+        const sessions = await historyService.getAllSessions();
         for (const session of sessions) {
           await historyService.clearHistory(session);
         }
