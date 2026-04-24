@@ -73,7 +73,12 @@ export class ChatHistoryService {
     }
 
     this.loadPromise = this.loadFromMongo();
-    await this.loadPromise;
+    try {
+      await this.loadPromise;
+    } catch (error) {
+      this.loadPromise = undefined;
+      throw error;
+    }
   }
 
   private async loadFromMongo(): Promise<void> {
