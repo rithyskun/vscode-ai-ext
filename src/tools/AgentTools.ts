@@ -37,6 +37,7 @@ export class ReadFileTool implements ITool {
         path: { type: 'string', description: 'Relative or absolute path to the file.' },
         start_line: { type: 'number', description: 'First line to read (1-based, optional).' },
         end_line:   { type: 'number', description: 'Last line to read (1-based, optional).' },
+        with_line_numbers: { type: 'boolean', description: 'Return the selected lines with line numbers (optional, default: false).' },
       },
       required: ['path'],
     },
@@ -48,11 +49,18 @@ export class ReadFileTool implements ITool {
     const text  = new TextDecoder().decode(bytes);
     const lines = text.split('\n');
 
-    const start = args['start_line'] ? (args['start_line'] as number) - 1 : 0;
-    const end   = args['end_line']   ? (args['end_line']   as number)     : lines.length;
-    const slice = lines.slice(start, end).join('\n');
+    const startArg = args['start_line'] ? Number(args['start_line']) : 1;
+    const endArg   = args['end_line']   ? Number(args['end_line'])   : lines.length;
+    const start = Math.max(1, Math.floor(startArg));
+    const end = Math.max(start, Math.min(lines.length, Math.floor(endArg)));
+    const withLineNumbers = Boolean(args['with_line_numbers']);
 
-    return `File: ${args['path']} (lines ${start + 1}–${end})\n\`\`\`\n${slice}\n\`\`\``;
+    const selected = lines.slice(start - 1, end);
+    const output = withLineNumbers
+      ? selected.map((line, index) => `${start + index}: ${line}`).join('\n')
+      : selected.join('\n');
+
+    return `File: ${args['path']} (lines ${start}–${end})\n\`\`\`\n${output}\n\`\`\``;
   }
 }
 
@@ -69,6 +77,7 @@ export class WriteFileTool implements ITool {
       properties: {
         path:    { type: 'string', description: 'Relative or absolute path to the file.' },
         content: { type: 'string', description: 'Full new content of the file.' },
+        mode: { type: 'string', description: 'Write mode: "overwrite" (default) or "append".', enum: ['overwrite', 'append'] },
       },
       required: ['path', 'content'],
     },
@@ -77,6 +86,7 @@ export class WriteFileTool implements ITool {
   async execute(args: Record<string, unknown>): Promise<string> {
     const filePath = args['path'] as string;
     const content  = args['content'] as string;
+    const mode = (args['mode'] as string | undefined) ?? 'overwrite';
     const uri      = resolveUri(filePath);
     const permissionService = PermissionService.getInstance();
 
@@ -93,6 +103,9 @@ export class WriteFileTool implements ITool {
       const bytes  = await vscode.workspace.fs.readFile(uri);
       existingContent = new TextDecoder().decode(bytes);
     } catch { /* new file */ }
+    const newContent = mode === 'append' && existingContent
+      ? `${existingContent}${existingContent.endsWith('\n') ? '' : '\n'}${content}`
+      : content;
 
     // Only show approval dialog if permission policy requires it
     if (!permissionCheck.allowed) {
@@ -107,9 +120,8 @@ export class WriteFileTool implements ITool {
 
       if (action === 'View Diff') {
         // Write to a tmp URI and show diff
-        const tmpUri = uri.with({ scheme: 'untitled', path: uri.path + '.proposed' });
-        await vscode.workspace.openTextDocument(tmpUri);
-        await vscode.commands.executeCommand('vscode.diff', uri, tmpUri, `AI proposed changes to ${filePath}`);
+        const tmpDoc = await vscode.workspace.openTextDocument({ content: newContent });
+        await vscode.commands.executeCommand('vscode.diff', uri, tmpDoc.uri, `AI proposed changes to ${filePath}`);
         const confirm = await vscode.window.showWarningMessage('Apply this change?', { modal: true }, 'Apply', 'Cancel');
         if (confirm !== 'Apply') {
           permissionService.recordPermissionHistory('write_file', 'execute', false, 'User cancelled');
@@ -120,9 +132,10 @@ export class WriteFileTool implements ITool {
         return 'Write cancelled by user.';
       }
     }
-
-    await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(content));
-    return `Successfully wrote ${content.split('\n').length} lines to ${filePath}.`;
+    const parentDir = vscode.Uri.file(path.dirname(uri.fsPath));
+    await vscode.workspace.fs.createDirectory(parentDir);
+    await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(newContent));
+    return `Successfully ${mode === 'append' ? 'appended to' : 'wrote'} ${filePath} (${newContent.split('\n').length} lines total).`;
   }
 }
 
