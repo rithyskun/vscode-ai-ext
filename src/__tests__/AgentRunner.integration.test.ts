@@ -8,6 +8,7 @@ import { ToolOutputAnalyzer } from '../core/ToolOutputAnalyzer';
 import { ExecutionReflector } from '../core/ExecutionReflector';
 import { AgentLearningService } from '../core/AgentLearningService';
 import { ExecutionContext } from '../core/ExecutionContext';
+import { PlanExecutionTracker } from '../core/PlanExecutionTracker';
 
 describe('AgentRunner Integration Tests', () => {
   let planningService: PlanningService;
@@ -148,7 +149,7 @@ describe('AgentRunner Integration Tests', () => {
       
       // Create plan
       const plan = await planningService.createPlan(userMessage, '');
-      const planTracker = new (require('../core/PlanExecutionTracker').PlanExecutionTracker)(plan.steps);
+      const planTracker = new PlanExecutionTracker(plan.steps);
       
       // Perform reflection
       const reflection = reflector.reflect(context, planTracker, userMessage);
@@ -188,7 +189,7 @@ describe('AgentRunner Integration Tests', () => {
       expect(output2.success).toBe(true);
       
       // 5. Reflection checkpoint
-      const reflection = reflector.reflect(context, new (require('../core/PlanExecutionTracker').PlanExecutionTracker)(plan.steps), userMessage);
+      const reflection = reflector.reflect(context, new PlanExecutionTracker(plan.steps), userMessage);
       expect(reflection.shouldContinue).toBe(true);
       
       // 6. Learn from execution

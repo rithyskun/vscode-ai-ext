@@ -160,7 +160,7 @@ export async function* runAgent(
 
       // Record final execution and learning
       learningService.recordExecution(
-        this.identifyTaskType(userMessage),
+        identifyTaskType(userMessage),
         toolSequence,
         true,
         Date.now() - executionContext.getStartTime(),
@@ -330,7 +330,7 @@ export async function* runAgent(
   // Record final execution with errors
   const errors = executionContext.getErrors().map(e => e.message);
   learningService.recordExecution(
-    this.identifyTaskType(userMessage),
+    identifyTaskType(userMessage),
     toolSequence,
     false,
     Date.now() - executionContext.getStartTime(),

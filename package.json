@@ -1,35 +1,81 @@
 {
   "name": "vscode-ai-assistant",
   "displayName": "AI Assistant",
-  "description": "Free AI chat, agent, and inline completion — Anthropic, Ollama, OpenRouter, LMS",
+  "description": "Free AI chat, agent, and inline completion \u2014 Anthropic, Ollama, OpenRouter, LMS",
   "version": "0.1.0",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["AI", "Other"],
-  "activationEvents": ["onStartupFinished"],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      { "command": "aiAssistant.openChat",        "title": "AI: Open Chat" },
-      { "command": "aiAssistant.runAgent",         "title": "AI: Run Agent on Selection" },
-      { "command": "aiAssistant.toggleCompletion", "title": "AI: Toggle Inline Completion" },
-      { "command": "aiAssistant.listModels",      "title": "AI: List Available Models" }
+      {
+        "command": "aiAssistant.openChat",
+        "title": "AI: Open Chat"
+      },
+      {
+        "command": "aiAssistant.runAgent",
+        "title": "AI: Run Agent on Selection"
+      },
+      {
+        "command": "aiAssistant.toggleCompletion",
+        "title": "AI: Toggle Inline Completion"
+      },
+      {
+        "command": "aiAssistant.listModels",
+        "title": "AI: List Available Models"
+      }
     ],
     "viewsContainers": {
-      "activitybar": [{ "id": "aiAssistant", "title": "AI Assistant", "icon": "$(hubot)" }]
+      "activitybar": [
+        {
+          "id": "aiAssistant",
+          "title": "AI Assistant",
+          "icon": "$(hubot)"
+        }
+      ]
     },
     "views": {
       "aiAssistant": [
-        { "type": "webview", "id": "aiAssistant.chatView", "name": "Chat" },
-        { "type": "webview", "id": "aiAssistant.chatHistory", "name": "History" },
-        { "type": "webview", "id": "aiAssistant.providerConfigView", "name": "Provider Config" }
+        {
+          "type": "webview",
+          "id": "aiAssistant.chatView",
+          "name": "Chat"
+        },
+        {
+          "type": "webview",
+          "id": "aiAssistant.chatHistory",
+          "name": "History"
+        },
+        {
+          "type": "webview",
+          "id": "aiAssistant.providerConfigView",
+          "name": "Provider Config"
+        }
       ]
     },
     "configuration": {
       "title": "AI Assistant",
       "properties": {
-        "aiAssistant.agentMode":           { "type": "boolean", "default": true },
-        "aiAssistant.inlineCompletion":    { "type": "boolean", "default": true },
-        "aiAssistant.contextLines":        { "type": "number",  "default": 50 },
+        "aiAssistant.agentMode": {
+          "type": "boolean",
+          "default": true
+        },
+        "aiAssistant.inlineCompletion": {
+          "type": "boolean",
+          "default": true
+        },
+        "aiAssistant.contextLines": {
+          "type": "number",
+          "default": 50
+        },
         "aiAssistant.mongoUri": {
           "type": "string",
           "default": "",
@@ -48,14 +94,18 @@
       }
     },
     "keybindings": [
-      { "command": "aiAssistant.openChat", "key": "ctrl+shift+a", "mac": "cmd+shift+a" }
+      {
+        "command": "aiAssistant.openChat",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
+      }
     ]
   },
   "scripts": {
     "build": "npm run compile && npm run copy-config",
     "vscode:prepublish": "npm run compile && npm run copy-config",
     "typecheck": "tsc -p ./ --noEmit",
-    "test": "node --test",
+    "test": "node --import ./test/setup-globals.mjs --loader ./test/node-ts-loader.mjs --test src/__tests__/*.test.ts",
     "compile": "tsc -p ./",
     "copy-config": "node -e \"require('fs').mkdirSync('out',{recursive:true});require('fs').copyFileSync('providers.json','out/providers.json')\"",
     "watch": "tsc -watch -p ./",
@@ -67,9 +117,9 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
-    "@types/node":   "^20.0.0",
+    "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
     "eslint": "^9.39.1",
-    "typescript":    "^5.3.0"
+    "typescript": "^5.3.0"
   }
 }

@@ -116,19 +116,19 @@ export class PlanningService {
         steps.push(
           {
             stepIndex: 0,
-            description: 'Determine file/directory location and structure',
-            expectedTools: ['list_directory'],
+            description: 'Create the file or directory with initial content',
+            expectedTools: ['write_file', 'create_directory', 'list_directory'],
             dependencies: [],
-            rationale: 'Need to understand the target location and avoid conflicts',
-            estimatedDuration: 1000,
+            rationale: 'Create the resource and ensure parent location is valid',
+            estimatedDuration: 1500,
           },
           {
             stepIndex: 1,
-            description: 'Create the file or directory with initial content',
-            expectedTools: ['write_file', 'create_directory'],
+            description: 'Verify the created resource and adjust structure if needed',
+            expectedTools: ['list_directory', 'read_file'],
             dependencies: [0],
-            rationale: 'Create the resource based on the determined location',
-            estimatedDuration: 1500,
+            rationale: 'Confirm that creation completed as requested',
+            estimatedDuration: 1000,
           }
         );
         break;
