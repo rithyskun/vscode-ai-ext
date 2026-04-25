@@ -225,7 +225,11 @@ export class ToolOutputAnalyzer {
         success: true,
         confidence: 0.9,
         analysis: 'Search completed with no results',
-        suggestedNextStep: 'Try a different search pattern',
+        suggestedNextStep: 'Try a broader search pattern or adjust keywords',
+        extractedData: {
+          resultCount: 0,
+          results: [],
+        },
       };
     }
 

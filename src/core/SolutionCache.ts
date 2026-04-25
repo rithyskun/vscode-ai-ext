@@ -53,9 +53,10 @@ export class SolutionCache {
     // Partial match (error pattern contains key words)
     for (const [, solution] of this.cache) {
       if (
-        solution.errorPattern.split(' ').some(word => errorPattern.includes(word)) &&
-        solution.toolName === toolName &&
-        solution.successRate > 0.7
+        (solution.errorPattern.includes(errorPattern) ||
+          errorPattern.includes(solution.errorPattern) ||
+          solution.errorPattern.split(' ').some(word => errorPattern.includes(word))) &&
+        solution.toolName === toolName
       ) {
         this.recordUsage(solution.id);
         return solution;

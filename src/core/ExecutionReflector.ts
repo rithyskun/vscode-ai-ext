@@ -144,12 +144,12 @@ export class ExecutionReflector {
       attempts: number;
     }>
   ): Array<{ type: string; count: number; examples: string[] }> {
-    const patterns = new Map<string, { count: number; examples: string[] }>();
+    const patterns = new Map<string, { type: string; count: number; examples: string[] }>();
 
     errors.forEach(error => {
       const key = `${error.toolName}/${error.errorType}`;
-      const current = patterns.get(key) || { count: 0, examples: [] };
-      current.count++;
+      const current = patterns.get(key) || { type: key, count: 0, examples: [] };
+      current.count += Math.max(1, error.attempts);
       if (current.examples.length < 2) {
         current.examples.push(error.message);
       }
@@ -250,3 +250,26 @@ export class ExecutionReflector {
 
     return { isProgressional: isProgressive, description };
   }
+
+  /**
+   * Detect whether execution appears stalled based on recent tool history.
+   */
+  detectExecutionStall(history: ToolExecutionRecord[], lookbackCount: number = 3): boolean {
+    if (history.length < lookbackCount || lookbackCount <= 1) {
+      return false;
+    }
+
+    const recent = history.slice(-lookbackCount);
+    const allFailed = recent.every(record => !record.success);
+    const sameTool = recent.every(record => record.toolName === recent[0].toolName);
+
+    return allFailed && sameTool;
+  }
+
+  /**
+   * Provide a recovery hint when execution appears stalled.
+   */
+  getStalledExecutionRecovery(lastToolName: string): string {
+    return `Execution appears stuck around '${lastToolName}'. Try a different approach instead of repeating ${lastToolName}.`;
+  }
+}
